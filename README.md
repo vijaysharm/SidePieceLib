@@ -151,7 +151,7 @@ Every external concern is abstracted behind a testable client:
 - Swift 6.2+
 - macOS (primary platform, with partial iOS font support)
 - [The Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture)
-- [swift-dependencies](https://github.com/pointfreeco/swift-dependencies)
+- [Textual](https://github.com/vijaysharm/textual) — rich attributed text rendering for SwiftUI
 
 ## Installation
 
