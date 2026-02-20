@@ -1,0 +1,45 @@
+//
+//  ToolRegistryClient.swift
+//  SidePiece
+//
+
+import Dependencies
+import DependenciesMacros
+import Foundation
+
+@DependencyClient
+public struct ToolRegistryClient: Sendable {
+    public var register: @Sendable (Tool) -> Void
+    public var execute: @Sendable (_ name: String, _ arguments: String, _ projectURL: URL) async throws -> String
+}
+
+extension ToolRegistryClient: DependencyKey {
+    public static let liveValue = {
+        let registry = LockIsolated<[Tool.ID: Tool]>([:])
+        return ToolRegistryClient(
+            register: { tool in
+                registry.withValue {
+                    $0[tool.id] = tool
+                }
+            },
+            execute: { name, arguments, projectURL in
+                guard let tool = registry.withValue({
+                    $0[name]
+                }) else {
+                    throw ToolExecutionError.unknown("Unknown tool: \(name)")
+                }
+
+                return try await tool.execute(arguments, projectURL)
+            }
+        )
+    }()
+
+    public static let testValue = ToolRegistryClient()
+}
+
+extension DependencyValues {
+    public var toolRegistryClient: ToolRegistryClient {
+        get { self[ToolRegistryClient.self] }
+        set { self[ToolRegistryClient.self] = newValue }
+    }
+}

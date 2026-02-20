@@ -1,0 +1,115 @@
+//
+//  DeleteConfirmation.swift
+//  SidePiece
+
+import ComposableArchitecture
+import SwiftUI
+
+@Reducer
+struct DeleteConfirmationFeature {
+    @ObservableState
+    struct State: Equatable {
+        enum Kind: Equatable {
+            case conversation(id: UUID, title: String)
+            case project(id: UUID, title: String, url: URL)
+        }
+        let kind: Kind
+
+        var title: String {
+            switch kind {
+            case .conversation: "Delete Conversation?"
+            case .project: "Remove Project?"
+            }
+        }
+
+        var message: String {
+            switch kind {
+            case let .conversation(_, title):
+                "\u{201C}\(title)\u{201D} will be permanently deleted."
+            case let .project(_, title, _):
+                "\u{201C}\(title)\u{201D} and all its conversations will be permanently removed."
+            }
+        }
+
+        var confirmButtonTitle: String {
+            switch kind {
+            case .conversation: "Delete"
+            case .project: "Remove"
+            }
+        }
+    }
+
+    enum Action: Equatable {
+        case cancel
+        case delegate(DelegateAction)
+
+        @CasePathable
+        enum DelegateAction: Equatable {
+            case confirmDeleteConversation(UUID)
+            case confirmRemoveProject(id: UUID, url: URL)
+        }
+    }
+
+    var body: some ReducerOf<Self> {
+        Reduce { state, action in
+            switch action {
+            case .cancel:
+                return .none
+            case .delegate:
+                return .none
+            }
+        }
+    }
+}
+
+struct DeleteConfirmationView: View {
+    let store: StoreOf<DeleteConfirmationFeature>
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Text(store.title)
+                .font(.headline)
+
+            Text(store.message)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+
+            HStack(spacing: 12) {
+                Button {
+                    store.send(.cancel)
+                } label: {
+                    Text("Cancel")
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                }
+                .buttonStyle(.plain)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                )
+
+                Button(role: .destructive) {
+                    switch store.kind {
+                    case let .conversation(id, _):
+                        store.send(.delegate(.confirmDeleteConversation(id)))
+                    case let .project(id, _, url):
+                        store.send(.delegate(.confirmRemoveProject(id: id, url: url)))
+                    }
+                } label: {
+                    Text(store.confirmButtonTitle)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                }
+                .buttonStyle(.plain)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.red)
+                )
+            }
+        }
+        .padding(24)
+        .background(Color(NSColor.controlBackgroundColor))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
