@@ -38,7 +38,7 @@ jobs:
     # Xcode versions on macos-26:
     #   26.0.1, 26.1.1, 26.2 (default/"latest"), 26.3
     #
-    # Note: SidePieceLib requires Swift 6.2+, which ships with Xcode 16.3+.
+    # Note: SidePieceLib requires Swift 6.1+, which ships with Xcode 16.3+.
     # ─────────────────────────────────────────────────────────────────────────
     strategy:
       fail-fast: false
