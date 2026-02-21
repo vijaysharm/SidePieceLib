@@ -11,7 +11,7 @@ import UniformTypeIdentifiers
 
 final class VSInlineAttachment: NSTextAttachment {
     public struct VSAttachmentModel: Sendable, Equatable, Identifiable {
-        public enum ModelType: @unchecked Sendable, Equatable {
+        public enum ModelType: Sendable, Equatable {
             case file(URL, UTType)
             case tool(String, Image)
             
