@@ -329,9 +329,3 @@ private extension NSItemProvider {
         }
     }
 }
-
-#Preview {
-    SidePieceView()
-        .frame(width: 900, height: 500)
-}
-

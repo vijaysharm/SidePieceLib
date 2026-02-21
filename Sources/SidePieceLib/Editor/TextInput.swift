@@ -636,8 +636,4 @@ extension NSSize {
     }
 }
 
-#Preview {
-    SidePieceView()
-        .frame(width: 900, height: 500)
-}
 #endif

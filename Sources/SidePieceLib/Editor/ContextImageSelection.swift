@@ -162,8 +162,3 @@ extension ContextImageSelectionFeature.State {
         }
     }
 }
-
-#Preview {
-    SidePieceView()
-        .frame(width: 900, height: 500)
-}

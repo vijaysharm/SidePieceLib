@@ -4,6 +4,11 @@
 
 SidePieceLib gives you everything you need to ship a native AI coding assistant on Apple platforms. It handles the hard parts — real-time LLM streaming, tool execution, conversation persistence, and project-aware context — so you can focus on building a great product.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./sidepiecelib.png">
+  <img alt="SidePieceLib" src="./sidepiecelib.png">
+</picture>
+
 ---
 
 ## Why SidePieceLib

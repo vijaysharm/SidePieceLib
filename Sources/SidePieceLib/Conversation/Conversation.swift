@@ -5,7 +5,6 @@
 
 import ComposableArchitecture
 import SwiftUI
-import SwiftComposableArchitecture
 
 @Reducer
 struct ConversationFeature {
@@ -623,9 +622,4 @@ private extension ConversationFeature.State.ContextMenuLocation {
             source
         }
     }
-}
-
-#Preview {
-    SidePieceView()
-        .frame(width: 900, height: 500)
 }

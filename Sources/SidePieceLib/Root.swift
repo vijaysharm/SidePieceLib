@@ -285,8 +285,3 @@ extension KeyboardShortcut {
     public static let closeOpenDialogs = KeyboardShortcut(key: .escape)
     public static let openSettings = KeyboardShortcut(key: .comma, modifiers: [.command])
 }
-
-#Preview {
-    SidePieceView()
-        .frame(width: 900, height: 500)
-}

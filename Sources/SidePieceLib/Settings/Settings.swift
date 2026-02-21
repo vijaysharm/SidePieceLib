@@ -132,8 +132,3 @@ struct SettingsView: View {
         .toolbarTitleDisplayMode(.inline)
     }
 }
-
-#Preview {
-    SidePieceView()
-        .frame(width: 900, height: 500)
-}

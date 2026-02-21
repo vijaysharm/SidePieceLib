@@ -5,7 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "SidePieceLib",
-    platforms: [.macOS(.v14)],
+    platforms: [.macOS(.v15)],
     products: [
         .library(
             name: "SidePieceLib",

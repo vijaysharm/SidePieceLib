@@ -359,8 +359,3 @@ struct ContextOverlayView: View {
         }
     }
 }
-
-#Preview {
-    SidePieceView()
-        .frame(width: 900, height: 500)
-}

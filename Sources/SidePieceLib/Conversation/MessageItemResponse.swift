@@ -471,8 +471,3 @@ struct MessageItemResponseView: View {
         .padding(.bottom, 32)
     }
 }
-
-#Preview {
-    SidePieceView()
-        .frame(width: 900, height: 500)
-}
