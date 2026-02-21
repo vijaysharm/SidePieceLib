@@ -40,7 +40,7 @@ jobs:
       matrix:
         include:
           - runner: macos-15
-            xcode_version: "16.3"
+            xcode_version: "latest"
     # ─────────────────────────────────────────────────────────────────────────
 
     runs-on: ${{ github.event_name == 'workflow_dispatch' && inputs.runner || matrix.runner }}
