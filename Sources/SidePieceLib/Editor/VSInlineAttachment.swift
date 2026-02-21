@@ -4,7 +4,7 @@
 //
 
 #if os(macOS)
-import AppKit
+@preconcurrency import AppKit
 import ComposableArchitecture
 import SwiftUI
 import UniformTypeIdentifiers
