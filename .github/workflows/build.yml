@@ -1,0 +1,80 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: "macOS runner image"
+        required: true
+        default: "macos-15"
+        type: choice
+        options:
+          - macos-15
+          - macos-14
+          - macos-13
+      xcode_version:
+        description: "Xcode version (e.g. 16.3, 16.2, or 'latest')"
+        required: true
+        default: "latest"
+        type: string
+
+jobs:
+  build:
+    name: Build (${{ matrix.runner }}, Xcode ${{ matrix.xcode_version }})
+
+    # ── Configuration ────────────────────────────────────────────────────────
+    # Adjust the matrix entries below to target different OS/Xcode combinations.
+    # Add more `include` entries to test against multiple configurations at once.
+    #
+    # Runner images:   macos-15 | macos-14 | macos-13
+    # Xcode versions:  a specific version like "16.3", or "latest" to use the
+    #                  runner's default Xcode installation.
+    #
+    # Note: SidePieceLib requires Swift 6.2+, which ships with Xcode 16.3+.
+    # ─────────────────────────────────────────────────────────────────────────
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            xcode_version: "16.3"
+    # ─────────────────────────────────────────────────────────────────────────
+
+    runs-on: ${{ github.event_name == 'workflow_dispatch' && inputs.runner || matrix.runner }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode version
+        run: |
+          XCODE_VERSION="${{ github.event_name == 'workflow_dispatch' && inputs.xcode_version || matrix.xcode_version }}"
+          echo "Requested Xcode version: $XCODE_VERSION"
+
+          if [ "$XCODE_VERSION" = "latest" ]; then
+            echo "Using default Xcode installation."
+          else
+            XCODE_PATH="/Applications/Xcode_${XCODE_VERSION}.app"
+            if [ ! -d "$XCODE_PATH" ]; then
+              echo "Xcode ${XCODE_VERSION} not found at ${XCODE_PATH}."
+              echo "Available Xcode installations on this runner:"
+              ls /Applications/ | grep -i xcode || echo "(none found)"
+              exit 1
+            fi
+            sudo xcode-select -s "${XCODE_PATH}/Contents/Developer"
+          fi
+
+          echo "Active Xcode:"
+          xcodebuild -version
+          echo ""
+          echo "Swift version:"
+          swift --version
+
+      - name: Resolve dependencies
+        run: swift package resolve
+
+      - name: Build
+        run: swift build -v
