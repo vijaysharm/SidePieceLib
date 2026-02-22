@@ -7,19 +7,19 @@ import ComposableArchitecture
 import SwiftUI
 
 @Reducer
-struct DirectoryModalFeature {
+public struct DirectoryModalFeature: Sendable {
     @ObservableState
-    struct State: Equatable {
+    public struct State: Equatable {
         var recentProjectsSelection = RecentProjectsSelectionFeature.State()
     }
     
-    enum Action: Equatable {
+    public enum Action: Equatable {
         case recentProjectsSelection(RecentProjectsSelectionFeature.Action)
         case cancel
         case confirm
     }
     
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         Scope(state: \.recentProjectsSelection, action: \.recentProjectsSelection) {
             RecentProjectsSelectionFeature()
         }

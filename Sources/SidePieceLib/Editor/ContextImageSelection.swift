@@ -8,20 +8,20 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 @Reducer
-struct ContextImageSelectionFeature {
+public struct ContextImageSelectionFeature: Sendable {
     @ObservableState
-    struct State: Equatable {
+    public struct State: Equatable {
         var presentImagePicker = false
         var files: [ManagedFile] = []
     }
 
-    enum Action: Equatable {
+    public enum Action: Equatable {
         case presentImagePickerChanged(Bool)
         case `internal`(InternalAction)
         case delegate(DelegateAction)
 
         @CasePathable
-        enum InternalAction: Equatable {
+        public enum InternalAction: Equatable {
             case removeImage(ManagedFile)
             case imageSelected([URL])
             case imagesStored([ManagedFile])
@@ -29,14 +29,14 @@ struct ContextImageSelectionFeature {
         }
 
         @CasePathable
-        enum DelegateAction: Equatable {
+        public enum DelegateAction: Equatable {
             case viewImage(URL)
         }
     }
 
     @Dependency(\.fileStorageClient) var fileStorageClient
 
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             case let .presentImagePickerChanged(value):

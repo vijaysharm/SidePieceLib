@@ -8,14 +8,14 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 @Reducer
-struct ContextInputFeature {
+public struct ContextInputFeature: Sendable {
     @ObservableState
-    struct State: Equatable, Identifiable {
-        enum ToolBarMode: Sendable, Equatable {
+    public struct State: Equatable, Identifiable {
+        public enum ToolBarMode: Sendable, Equatable {
             case expandOnFocus
             case alwaysShow
         }
-        var id: UUID = UUID()
+        public var id: UUID = UUID()
         var frame: CGRect = .zero
         var inputField: TextInputFeature.State
         var images: ContextImageSelectionFeature.State
@@ -24,9 +24,9 @@ struct ContextInputFeature {
         var isDragOver: Bool = false
     }
     
-    enum Action: Equatable {
+    public enum Action: Equatable {
         @CasePathable
-        enum InternalAction: Equatable {
+        public enum InternalAction: Equatable {
             case frameDidChange(CGRect)
             case addImage
             case setDragOver(Bool)
@@ -36,7 +36,7 @@ struct ContextInputFeature {
         }
         
         @CasePathable
-        enum DelegateAction: Equatable {
+        public enum DelegateAction: Equatable {
             case frameDidChange(CGRect)
             case submit
             case contextOverlay
@@ -53,7 +53,7 @@ struct ContextInputFeature {
     
     @Dependency(\.fileStorageClient) var fileStorageClient
 
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         Scope(state: \.inputField, action: \.inputField) {
             TextInputFeature()
         }

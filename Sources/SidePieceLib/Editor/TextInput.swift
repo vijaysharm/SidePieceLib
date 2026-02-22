@@ -9,15 +9,15 @@ import ComposableArchitecture
 import SwiftUI
 
 @Reducer
-struct TextInputFeature {
-    enum InputAction: Sendable, Equatable {
+public struct TextInputFeature: Sendable {
+    public enum InputAction: Sendable, Equatable {
         case none
         case context(String, NSRange)
         case command(String, NSRange)
     }
 
     @ObservableState
-    struct State: Equatable {
+    public struct State: Equatable {
         var minHeight: CGFloat
         var maxHeight: CGFloat
         var height: CGFloat
@@ -115,13 +115,13 @@ struct TextInputFeature {
         }
     }
     
-    enum Action: Equatable {
+    public enum Action: Equatable {
         case delegate(DelegateAction)
         case `internal`(InternalAction)
         
         @CasePathable
-        enum DelegateAction: Equatable {
-            enum Event: Equatable {
+        public enum DelegateAction: Equatable {
+            public enum Event: Equatable {
                 case keyboard(TextViewCommand)
                 case action(InputAction)
             }
@@ -129,7 +129,7 @@ struct TextInputFeature {
         }
         
         @CasePathable
-        enum InternalAction: Equatable {
+        public enum InternalAction: Equatable {
             case textViewDidChange(NSRange)
             case mouseDown(CGPoint, CGPoint, Int)
             case focusDidChange(Bool)
@@ -138,7 +138,7 @@ struct TextInputFeature {
         }
     }
     
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             case let .internal(.textViewDidChange(selectedRange)):

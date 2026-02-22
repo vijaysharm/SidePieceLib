@@ -8,9 +8,9 @@ import Textual
 import SwiftUI
 
 @Reducer
-struct MessageItemResponseFeature: Sendable {
+public struct MessageItemResponseFeature: Sendable {
     @ObservableState
-    struct State: Equatable, Sendable {
+    public struct State: Equatable, Sendable {
         let projectURL: URL
         var blocks: IdentifiedArrayOf<ResponseBlockFeature.State> = []
         var content: [ConversationItem] {
@@ -18,7 +18,7 @@ struct MessageItemResponseFeature: Sendable {
         }
     }
 
-    enum Action: Equatable, Sendable {
+    public enum Action: Equatable, Sendable {
         case appendTextDelta(String)
         case appendReasoningDelta(String)
         case toolCallStart(id: String, name: String)
@@ -32,7 +32,7 @@ struct MessageItemResponseFeature: Sendable {
         case blocks(IdentifiedActionOf<ResponseBlockFeature>)
         
         @CasePathable
-        enum DelegateAction: Equatable, Sendable {
+        public enum DelegateAction: Equatable, Sendable {
             case toolPermissionResponse(ToolPermissionDecision, ToolCallBlockFeature.State)
             case executeToolCall(ToolCallBlockFeature.State)
             case streamEnded(TokenUsage?)
@@ -41,7 +41,7 @@ struct MessageItemResponseFeature: Sendable {
         }
 
         @CasePathable
-        enum InternalAction: Equatable, Sendable {
+        public enum InternalAction: Equatable, Sendable {
             case toolCallComplete(ToolCallBlockFeature.State, Result<String, ToolExecutionError>)
         }
 
@@ -56,7 +56,7 @@ struct MessageItemResponseFeature: Sendable {
     @Dependency(\.uuid) var uuid
     @Dependency(\.toolRegistryClient) var toolRegistryClient
 
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             case let .appendTextDelta(text):

@@ -7,11 +7,11 @@ import ComposableArchitecture
 import SwiftUI
 
 @Reducer
-struct ModelSelectionFeature: Sendable {
-    struct DisplayModel: Equatable, Sendable, Identifiable {
+public struct ModelSelectionFeature: Sendable {
+    public struct DisplayModel: Equatable, Sendable, Identifiable {
         let model: Model
 
-        var id: String { model.id.description }
+        public var id: String { model.id.description }
         var name: String { model.displayName }
         var family: String? { model.family }
 
@@ -60,7 +60,7 @@ struct ModelSelectionFeature: Sendable {
         }
     }
 
-    enum ModelCategory: Equatable, Sendable, Hashable {
+    public enum ModelCategory: Equatable, Sendable, Hashable {
         case preferred
         case provider(String)
 
@@ -84,8 +84,8 @@ struct ModelSelectionFeature: Sendable {
     }
     
     @ObservableState
-    struct State: Equatable, Sendable {
-        struct Source: Equatable, Sendable {
+    public struct State: Equatable, Sendable {
+        public struct Source: Equatable, Sendable {
             let inputId: ContextInputFeature.State.ID
             let conversationId: ConversationFeature.State.ID
         }
@@ -151,16 +151,16 @@ struct ModelSelectionFeature: Sendable {
         }
     }
 
-    enum Action: Equatable, Sendable {
+    public enum Action: Equatable, Sendable {
         @CasePathable
-        enum DelegateAction: Equatable, Sendable {
+        public enum DelegateAction: Equatable, Sendable {
             case modelSelected(State.Source, Model)
             case showModelInfo(Model)
             case dismiss
         }
 
         @CasePathable
-        enum InternalAction: Equatable, Sendable {
+        public enum InternalAction: Equatable, Sendable {
             case searchTextChanged(String)
             case selectCategory(ModelCategory)
             case selectModel(Model)
@@ -172,7 +172,7 @@ struct ModelSelectionFeature: Sendable {
         case delegate(DelegateAction)
     }
 
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             case let .internal(.searchTextChanged(text)):

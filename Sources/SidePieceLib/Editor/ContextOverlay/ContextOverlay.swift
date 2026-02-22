@@ -80,9 +80,9 @@ extension ContextItem {
 }
 
 @Reducer
-struct ContextOverlayFeature {
+public struct ContextOverlayFeature: Sendable {
     @ObservableState
-    struct State: Sendable, Equatable {
+    public struct State: Sendable, Equatable {
         var project: URL
         var loading: Bool = true
         var showFilter: Bool = true
@@ -94,7 +94,7 @@ struct ContextOverlayFeature {
         var focusTextField: Bool = false
     }
     
-    enum Action: Sendable, Equatable {
+    public enum Action: Sendable, Equatable {
         case viewDidAppear
         case back
         case push([ContextItem])
@@ -105,7 +105,7 @@ struct ContextOverlayFeature {
         case `internal`(InternalAction)
         
         @CasePathable
-        enum InternalAction: Equatable, Sendable {
+        public enum InternalAction: Equatable, Sendable {
             case performSearch(String)
             case didLoadRecentFiles([ContextItem])
             case didCompleteSearch(String, [ContextItem])
@@ -121,7 +121,7 @@ struct ContextOverlayFeature {
         case search
     }
     
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             case .viewDidAppear:

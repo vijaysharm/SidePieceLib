@@ -7,10 +7,10 @@ import ComposableArchitecture
 import Foundation
 
 @Reducer
-struct ProjectItemFeature {
+public struct ProjectItemFeature: Sendable {
     @ObservableState
-    struct State: Equatable, Identifiable {
-        let id: UUID
+    public struct State: Equatable, Identifiable {
+        public let id: UUID
         var url: URL
         var isExpanded: Bool = true
         var conversationIDs: [UUID] = []
@@ -18,11 +18,11 @@ struct ProjectItemFeature {
         var displayName: String { url.lastPathComponent }
     }
 
-    enum Action: Equatable {
+    public enum Action: Equatable {
         case toggleExpanded
     }
 
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             case .toggleExpanded:

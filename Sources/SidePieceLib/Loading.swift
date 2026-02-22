@@ -7,18 +7,18 @@ import ComposableArchitecture
 import SwiftUI
 
 @Reducer
-struct LoadingFeature {
+public struct LoadingFeature: Sendable {
     @ObservableState
-    struct State: Equatable {
+    public struct State: Equatable {
         var categories: IdentifiedArrayOf<SettingCategory>
     }
     
-    enum Action: Equatable {
+    public enum Action: Equatable {
         case onAppear
         case delegate(DelegateAction)
         
         @CasePathable
-        enum DelegateAction: Equatable {
+        public enum DelegateAction: Equatable {
             case ready(RootFeature.State)
         }
     }
@@ -29,7 +29,7 @@ struct LoadingFeature {
     @Dependency(\.recentProjectsClient) var recentProjectsClient
     @Dependency(\.conversationStorageClient) var conversationStorageClient
 
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             case .onAppear:

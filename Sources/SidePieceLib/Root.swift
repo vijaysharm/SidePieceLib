@@ -7,9 +7,9 @@ import ComposableArchitecture
 import SwiftUI
 
 @Reducer
-struct RootFeature {
+public struct RootFeature: Sendable {
     @Reducer
-    enum Destination {
+    public enum Destination {
         case imageOverlay(ImageOverlayFeature)
         case modelSelection(ModelSelectionFeature)
         case deleteConfirmation(DeleteConfirmationFeature)
@@ -17,8 +17,8 @@ struct RootFeature {
     }
 
     @ObservableState
-    struct State: Equatable {
-        enum Page: Equatable, Sendable {
+    public struct State: Equatable {
+        public enum Page: Equatable, Sendable {
             case project
             case settings
         }
@@ -33,7 +33,7 @@ struct RootFeature {
         @Presents var destination: Destination.State?
     }
 
-    enum Action: Equatable {
+    public enum Action: Equatable {
         case onAppear
         case onDisappear
         case dismissModelSelection
@@ -44,12 +44,12 @@ struct RootFeature {
         case `internal`(InternalAction)
         
         @CasePathable
-        enum InternalAction: Equatable {
+        public enum InternalAction: Equatable {
             case ready
         }
     }
 
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         Scope(state: \.project, action: \.project) {
             ProjectFeature()
         }

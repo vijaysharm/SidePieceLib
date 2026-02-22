@@ -6,8 +6,8 @@
 import ComposableArchitecture
 import SwiftUI
 
-struct ActionButton: Equatable, Identifiable {
-    var id: String { title }
+public struct ActionButton: Equatable, Identifiable {
+    public var id: String { title }
     let icon: String
     let title: String
     let action: SplashScreenFeature.Action
@@ -16,11 +16,11 @@ struct ActionButton: Equatable, Identifiable {
 // MARK: - Reducer
 
 @Reducer
-struct SplashScreenFeature {
+public struct SplashScreenFeature: Sendable {
     
     // MARK: - Focus
     
-    enum FocusableItem: Hashable {
+    public enum FocusableItem: Hashable {
         case actionButton(String)
         case recentProject(UUID)
     }
@@ -28,7 +28,7 @@ struct SplashScreenFeature {
     // MARK: - State
     
     @ObservableState
-    struct State: Equatable {
+    public struct State: Equatable {
         var appIcon: String
         var appTitle: String
         var appVersion: String
@@ -47,7 +47,7 @@ struct SplashScreenFeature {
     
     // MARK: - Action
     
-    enum Action: BindableAction, Equatable {
+    public enum Action: BindableAction, Equatable {
         case binding(BindingAction<State>)
         case onAppear
         case enterKeyPressed
@@ -60,7 +60,7 @@ struct SplashScreenFeature {
     
     // MARK: - Reducer Body
     
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         BindingReducer()
         
         Scope(state: \.recentProjectsSelection, action: \.recentProjectsSelection) {

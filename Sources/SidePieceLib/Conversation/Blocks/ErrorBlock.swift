@@ -7,25 +7,25 @@ import ComposableArchitecture
 import SwiftUI
 
 @Reducer
-struct ErrorBlockFeature: Sendable {
+public struct ErrorBlockFeature: Sendable {
     @ObservableState
-    struct State: Identifiable, Equatable, Sendable {
-        let id: UUID
+    public struct State: Identifiable, Equatable, Sendable {
+        public let id: UUID
         let error: LLMError
     }
     
-    enum Action: Equatable, Sendable {
+    public enum Action: Equatable, Sendable {
         @CasePathable
-        enum DelegateAction: Equatable, Sendable {}
+        public enum DelegateAction: Equatable, Sendable {}
 
         @CasePathable
-        enum InternalAction: Equatable, Sendable {}
+        public enum InternalAction: Equatable, Sendable {}
 
         case `internal`(InternalAction)
         case delegate(DelegateAction)
     }
     
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             default:

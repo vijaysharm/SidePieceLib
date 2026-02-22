@@ -7,17 +7,17 @@ import ComposableArchitecture
 import SwiftUI
 
 @Reducer
-struct ImageOverlayFeature {
+public struct ImageOverlayFeature: Sendable {
     @ObservableState
-    struct State: Equatable {
+    public struct State: Equatable {
         let url: URL
     }
 
-    enum Action: Equatable {
+    public enum Action: Equatable {
         case dismiss
     }
 
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             case .dismiss:

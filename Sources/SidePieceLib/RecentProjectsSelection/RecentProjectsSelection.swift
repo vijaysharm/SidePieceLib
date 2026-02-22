@@ -9,18 +9,18 @@ import SwiftUI
 // MARK: - Reducer
 
 @Reducer
-struct RecentProjectsSelectionFeature {
+public struct RecentProjectsSelectionFeature: Sendable {
     
     // MARK: - Focus
     
-    enum FocusableItem: Hashable {
+    public enum FocusableItem: Hashable {
         case project(UUID)
     }
     
     // MARK: - State
     
     @ObservableState
-    struct State: Equatable {
+    public struct State: Equatable {
         var isLoading = true
         var recentProjects: [RecentProject] = []
         var selectedProjectID: UUID? = nil
@@ -34,7 +34,7 @@ struct RecentProjectsSelectionFeature {
     
     // MARK: - Action
     
-    enum Action: BindableAction, Equatable {
+    public enum Action: BindableAction, Equatable {
         case binding(BindingAction<State>)
         case onAppear
         case enterKeyPressed
@@ -51,7 +51,7 @@ struct RecentProjectsSelectionFeature {
         case delegate(Delegate)
         
         @CasePathable
-        enum Delegate: Equatable {
+        public enum Delegate: Equatable {
             case openUrl(URL)
             case error(String)
         }
@@ -61,7 +61,7 @@ struct RecentProjectsSelectionFeature {
     
     // MARK: - Reducer Body
     
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         BindingReducer()
         
         Reduce { state, action in

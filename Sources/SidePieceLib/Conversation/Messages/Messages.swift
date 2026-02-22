@@ -6,9 +6,9 @@ import ComposableArchitecture
 import SwiftUI
 
 @Reducer
-struct MessagesFeature {
+public struct MessagesFeature: Sendable {
     @ObservableState
-    struct State: Equatable {
+    public struct State: Equatable {
         var title = MessageTitleFeature.State()
         var date: Date
         var model: Model
@@ -20,7 +20,7 @@ struct MessagesFeature {
         var allowedTools: Set<String> = []
     }
 
-    enum Action: Equatable {
+    public enum Action: Equatable {
         case title(MessageTitleFeature.Action)
         case messageItems(IdentifiedActionOf<MessageItemFeature>)
         
@@ -34,7 +34,7 @@ struct MessagesFeature {
 
     @Dependency(\.uuid) var uuid
     
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         Scope(state: \.title, action: \.title) {
             MessageTitleFeature()
         }

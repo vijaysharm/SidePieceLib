@@ -7,11 +7,11 @@ import ComposableArchitecture
 import SwiftUI
 
 @Reducer
-struct ConversationFeature {
+public struct ConversationFeature: Sendable {
     @ObservableState
-    struct State: Equatable, Identifiable {
-        enum ContextMenuLocation: Equatable {
-            enum Source: Equatable {
+    public struct State: Equatable, Identifiable {
+        public enum ContextMenuLocation: Equatable {
+            public enum Source: Equatable {
                 case text
                 case button
             }
@@ -20,7 +20,7 @@ struct ConversationFeature {
             case messages(UUID, CGRect, Source)
         }
         
-        var id: UUID = UUID()
+        public var id: UUID = UUID()
         var project: URL
         var mainTextView: ContextInputFeature.State
         var messages: MessagesFeature.State? = nil
@@ -30,7 +30,7 @@ struct ConversationFeature {
         var tokenUsage: TokenUsage = .zero
     }
     
-    enum Action: Equatable {
+    public enum Action: Equatable {
         case onAppear
         case dismissContextMenu
         case mainTextView(ContextInputFeature.Action)
@@ -44,7 +44,7 @@ struct ConversationFeature {
         case delegate(DelegateAction)
 
         @CasePathable
-        enum DelegateAction: Equatable {
+        public enum DelegateAction: Equatable {
             case viewImage(URL)
             case selectModel(
                 source: ModelSelectionFeature.State.Source,
@@ -56,7 +56,7 @@ struct ConversationFeature {
     @Dependency(\.date) var date
     @Dependency(\.uuid) var uuid
     
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         Scope(state: \.mainTextView, action: \.mainTextView) {
             ContextInputFeature()
         }

@@ -7,10 +7,10 @@ import ComposableArchitecture
 import SwiftUI
 
 @Reducer
-struct MessageItemFeature {
+public struct MessageItemFeature: Sendable {
     @ObservableState
-    struct State: Equatable, Identifiable {
-        var id = UUID()
+    public struct State: Equatable, Identifiable {
+        public var id = UUID()
         let projectURL: URL
         var prompt: ContextInputFeature.State
         var history: [ConversationItem]
@@ -28,7 +28,7 @@ struct MessageItemFeature {
         }
     }
 
-    enum Action: Equatable {
+    public enum Action: Equatable {
         case startLLMStream
         case cancelLLMStream
 
@@ -39,13 +39,13 @@ struct MessageItemFeature {
         case delegate(DelegateAction)
 
         @CasePathable
-        enum InternalAction: Equatable {
+        public enum InternalAction: Equatable {
             case startLLMStream
             case llmEvent(LLMStreamEvent)
         }
         
         @CasePathable
-        enum DelegateAction: Equatable {
+        public enum DelegateAction: Equatable {
             case streamError(String)
         }
     }
@@ -56,7 +56,7 @@ struct MessageItemFeature {
     
     @Dependency(\.messageItemClient) var messageItemClient
     
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         Scope(state: \.prompt, action: \.prompt) {
             ContextInputFeature()
         }
