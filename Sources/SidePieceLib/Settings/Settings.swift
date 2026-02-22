@@ -80,7 +80,7 @@ public struct SettingsFeature: Sendable {
                             case let .secureText(_, key):
                                 guard let value = try? key.read() else { break }
                                 result[next.id] = .secure(maskedPreview(for: value))
-                            case .button:
+                            case .button, .label, .link:
                                 break
                             }
                         }

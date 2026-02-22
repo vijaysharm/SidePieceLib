@@ -43,10 +43,12 @@ struct SettingsSectionCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Section title
-            Text(section.title)
-                .font(.headline)
-                .fontWeight(.semibold)
-                .padding(.bottom, 8)
+            if !section.title.isEmpty {
+                Text(section.title)
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .padding(.bottom, 8)
+            }
 
             // Items in a grouped card
             VStack(alignment: .leading, spacing: 0) {

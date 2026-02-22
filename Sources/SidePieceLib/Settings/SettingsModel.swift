@@ -13,8 +13,10 @@ public enum SettingType: Equatable, Sendable {
     case text(placeholder: String, StorageKey<String>)
     case dropdown(options: IdentifiedArrayOf<Option>, StorageKey<String>)
     case segmented(options: IdentifiedArrayOf<Option>, StorageKey<String>)
-    case button(title: String) // I think should be sending out some kind of Action
     case secureText(placeholder: String, StorageKey<String>)
+    case button(title: String) // I think should be sending out some kind of Action
+    case label(title: String)
+    case link(title: String, url: URL)
 
     public struct Option: Equatable, Sendable, Identifiable {
         public let id: String
@@ -82,7 +84,7 @@ extension SettingItem {
                 case let .string(value), let .secure(value):
                     try key.write(value)
                 }
-            case .button: // I think should be sending out some kind of Action:
+            case .button, .label, .link: // I think should be sending out some kind of Action:
                 break
         }
     }

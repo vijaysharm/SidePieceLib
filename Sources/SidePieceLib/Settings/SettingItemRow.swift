@@ -144,6 +144,28 @@ struct SettingItemRow: View {
                         }
                     }
                 }
+            case let .label(title):
+                HStack {
+                    Text(item.title)
+                        .font(.subheadline)
+                    Spacer()
+                    Text(title)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+            case let .link(title, url):
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(item.title)
+                            .font(.subheadline)
+                        Text(item.description)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Link(title, destination: url)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
