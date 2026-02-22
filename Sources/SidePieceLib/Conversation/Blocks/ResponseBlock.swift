@@ -7,15 +7,15 @@ import ComposableArchitecture
 import Foundation
 
 @Reducer
-struct ResponseBlockFeature {
+public struct ResponseBlockFeature: Sendable {
     @ObservableState
-    enum State: Identifiable, Equatable {
+    public enum State: Identifiable, Equatable, Sendable {
         case text(TextBlockFeature.State)
         case reasoning(ReasoningBlockFeature.State)
         case toolCall(ToolCallBlockFeature.State)
         case error(ErrorBlockFeature.State)
         
-        var id: UUID {
+        public var id: UUID {
             switch self {
             case let .text(data):
                 data.id
@@ -29,14 +29,14 @@ struct ResponseBlockFeature {
         }
     }
     
-    enum Action: Equatable {
+    public enum Action: Equatable, Sendable {
         case text(TextBlockFeature.Action)
         case reasoning(ReasoningBlockFeature.Action)
         case toolCall(ToolCallBlockFeature.Action)
         case error(ErrorBlockFeature.Action)
     }
     
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             case .text:

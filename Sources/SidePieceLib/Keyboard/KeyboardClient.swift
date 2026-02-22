@@ -50,16 +50,16 @@ extension DependencyValues {
     }
 }
 
-struct KeyboardShortcut: Equatable {
+public struct KeyboardShortcut: Equatable, Sendable {
     let key: KeyEquivalent
     let modifiers: EventModifiers
     
-    init(key: KeyEquivalent, modifiers: EventModifiers = []) {
+    public init(key: KeyEquivalent, modifiers: EventModifiers = []) {
         self.key = key
         self.modifiers = modifiers
     }
     
-    init?(event: NSEvent) {
+    public init?(event: NSEvent) {
         guard let characters = event.charactersIgnoringModifiers,
               let scalar = characters.unicodeScalars.first else {
             return nil
@@ -73,43 +73,43 @@ struct KeyboardShortcut: Equatable {
 // MARK: - KeyEquivalent Constants
 
 extension KeyEquivalent {
-    static let `return` = KeyEquivalent("\r")
-    static let escape = KeyEquivalent("\u{1B}")
-    static let tab = KeyEquivalent("\u{19}")
-    static let space = KeyEquivalent(" ")
-    static let delete = KeyEquivalent("\u{7F}")
-    static let backspace = KeyEquivalent("\u{08}")
-    static let comma = KeyEquivalent(",")
+    public static let `return` = KeyEquivalent("\r")
+    public static let escape = KeyEquivalent("\u{1B}")
+    public static let tab = KeyEquivalent("\u{19}")
+    public static let space = KeyEquivalent(" ")
+    public static let delete = KeyEquivalent("\u{7F}")
+    public static let backspace = KeyEquivalent("\u{08}")
+    public static let comma = KeyEquivalent(",")
     
     // Arrow keys
-    static let upArrow = KeyEquivalent(Character(Unicode.Scalar(NSUpArrowFunctionKey)!))
-    static let downArrow = KeyEquivalent(Character(Unicode.Scalar(NSDownArrowFunctionKey)!))
-    static let leftArrow = KeyEquivalent(Character(Unicode.Scalar(NSLeftArrowFunctionKey)!))
-    static let rightArrow = KeyEquivalent(Character(Unicode.Scalar(NSRightArrowFunctionKey)!))
+    public static let upArrow = KeyEquivalent(Character(Unicode.Scalar(NSUpArrowFunctionKey)!))
+    public static let downArrow = KeyEquivalent(Character(Unicode.Scalar(NSDownArrowFunctionKey)!))
+    public static let leftArrow = KeyEquivalent(Character(Unicode.Scalar(NSLeftArrowFunctionKey)!))
+    public static let rightArrow = KeyEquivalent(Character(Unicode.Scalar(NSRightArrowFunctionKey)!))
 }
 
 // MARK: - KeyboardShortcut Constants
 
 extension KeyboardShortcut {
     // Command shortcuts
-    static let commandReturn = KeyboardShortcut(key: .return, modifiers: .command)
-    static let commandN = KeyboardShortcut(key: "n", modifiers: .command)
-    static let commandK = KeyboardShortcut(key: "k", modifiers: .command)
-    static let commandL = KeyboardShortcut(key: "l", modifiers: .command)
-    static let commandW = KeyboardShortcut(key: "w", modifiers: .command)
-    static let commandSlash = KeyboardShortcut(key: "/", modifiers: .command)
+    public static let commandReturn = KeyboardShortcut(key: .return, modifiers: .command)
+    public static let commandN = KeyboardShortcut(key: "n", modifiers: .command)
+    public static let commandK = KeyboardShortcut(key: "k", modifiers: .command)
+    public static let commandL = KeyboardShortcut(key: "l", modifiers: .command)
+    public static let commandW = KeyboardShortcut(key: "w", modifiers: .command)
+    public static let commandSlash = KeyboardShortcut(key: "/", modifiers: .command)
     
     // Standalone keys
-    static let escape = KeyboardShortcut(key: .escape)
-    static let `return` = KeyboardShortcut(key: .return)
-    static let tab = KeyboardShortcut(key: .tab)
+    public static let escape = KeyboardShortcut(key: .escape)
+    public static let `return` = KeyboardShortcut(key: .return)
+    public static let tab = KeyboardShortcut(key: .tab)
     
     // Arrow keys
-    static let upArrow = KeyboardShortcut(key: .upArrow)
-    static let downArrow = KeyboardShortcut(key: .downArrow)
+    public static let upArrow = KeyboardShortcut(key: .upArrow)
+    public static let downArrow = KeyboardShortcut(key: .downArrow)
     
     // Command+Shift shortcuts
-    static let commandShiftN = KeyboardShortcut(key: "n", modifiers: [.command, .shift])
+    public static let commandShiftN = KeyboardShortcut(key: "n", modifiers: [.command, .shift])
 }
 
 extension EventModifiers {

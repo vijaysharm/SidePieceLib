@@ -7,9 +7,9 @@ import ComposableArchitecture
 import SwiftUI
 
 @Reducer
-struct SettingsFeature: Sendable {
+public struct SettingsFeature: Sendable {
     @ObservableState
-    struct State: Equatable {
+    public struct State: Equatable {
         var categories: IdentifiedArrayOf<SettingCategory>
         var selectedCategoryID: SettingCategory.ID?
         var settingItemValues: [SettingItem.ID: SettingValue] = [:]
@@ -18,7 +18,7 @@ struct SettingsFeature: Sendable {
             selectedCategoryID.flatMap { categories[id: $0] }
         }
         
-        init(
+        public init(
             categories: IdentifiedArrayOf<SettingCategory>,
             selectedCategoryID: SettingCategory.ID? = nil
         ) {
@@ -27,16 +27,16 @@ struct SettingsFeature: Sendable {
         }
     }
 
-    enum Action: Equatable, Sendable {
+    public enum Action: Equatable, Sendable {
         case loadStoredKeyStatuses
         
         @CasePathable
-        enum DelegateAction: Equatable, Sendable {
+        public enum DelegateAction: Equatable, Sendable {
             case dismiss
         }
 
         @CasePathable
-        enum InternalAction: Equatable, Sendable {
+        public enum InternalAction: Equatable, Sendable {
             case selectCategory(id: SettingCategory.ID)
             case updateSetting(itemID: SettingItem.ID, value: SettingValue)
             case settingButtonTapped(
@@ -50,7 +50,7 @@ struct SettingsFeature: Sendable {
         case delegate(DelegateAction)
     }
 
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             case let .internal(.selectCategory(id)):

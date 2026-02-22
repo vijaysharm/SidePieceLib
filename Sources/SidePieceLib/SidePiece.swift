@@ -7,19 +7,19 @@ import ComposableArchitecture
 import SwiftUI
 
 @Reducer
-struct SidePieceAppFeature {
+public struct SidePieceAppFeature: Sendable {
     @ObservableState
-    enum State: Equatable {
+    public enum State: Equatable {
         case loading(LoadingFeature.State)
         case root(RootFeature.State)
     }
     
-    enum Action: Equatable {
+    public enum Action: Equatable {
         case loading(LoadingFeature.Action)
         case root(RootFeature.Action)
     }
     
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             case let .loading(.delegate(.ready(data))):

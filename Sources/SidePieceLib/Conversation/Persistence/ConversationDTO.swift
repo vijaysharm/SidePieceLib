@@ -8,7 +8,7 @@ import UniformTypeIdentifiers
 
 // MARK: - Top-Level DTO
 
-struct ConversationDTO: Codable, Sendable, Equatable {
+public struct ConversationDTO: Codable, Sendable, Equatable {
     let id: UUID
     let projectPath: String
     var draft: DraftDTO?

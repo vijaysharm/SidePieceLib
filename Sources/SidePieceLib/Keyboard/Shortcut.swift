@@ -7,19 +7,19 @@ import ComposableArchitecture
 import Foundation
 
 @Reducer
-struct ShortcutFeature {
+public struct ShortcutFeature: Sendable {
     @ObservableState
-    struct State: Equatable, Sendable {
+    public struct State: Equatable, Sendable {
         var shortcuts: [KeyboardShortcut]
     }
     
-    enum Action: Equatable, Sendable {
+    public enum Action: Equatable, Sendable {
         case start
         case stop
         case delegate(DelegateAction)
         
         @CasePathable
-        enum DelegateAction: Equatable, Sendable {
+        public enum DelegateAction: Equatable, Sendable {
             case shortcut(KeyboardShortcut)
         }
     }
@@ -30,7 +30,7 @@ struct ShortcutFeature {
 
     @Dependency(\.keyboardClient) var keyboardClient
     
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             case .start:

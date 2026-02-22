@@ -5,16 +5,16 @@
 import ComposableArchitecture
 import SwiftUI
 
-struct SearchLoadedConversation: Equatable {
+public struct SearchLoadedConversation: Equatable {
     let dto: ConversationDTO
     let projectURL: URL
     let projectID: UUID
 }
 
 @Reducer
-struct ProjectFeature {
+public struct ProjectFeature: Sendable {
     @ObservableState
-    struct State: Equatable {
+    public struct State: Equatable {
         var models: Models
         var agents: Agents
 
@@ -110,7 +110,7 @@ struct ProjectFeature {
         }
     }
 
-    enum Action: Equatable {
+    public enum Action: Equatable {
         case onAppear
         case addProject(URL)
         case newAgent
@@ -132,7 +132,7 @@ struct ProjectFeature {
         )
 
         @CasePathable
-        enum DelegateAction: Equatable {
+        public enum DelegateAction: Equatable {
             case selectDirectory
             case settings
             case viewImage(URL)
@@ -141,7 +141,7 @@ struct ProjectFeature {
         }
 
         @CasePathable
-        enum InternalAction: Equatable {
+        public enum InternalAction: Equatable {
             case indexProject(URL)
             case performSearch(String)
             case searchCompleted(String, Set<UUID>, [SearchLoadedConversation])
@@ -162,7 +162,7 @@ struct ProjectFeature {
         case search
     }
 
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             case .onAppear:

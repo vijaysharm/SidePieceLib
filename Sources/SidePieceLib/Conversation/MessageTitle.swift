@@ -7,14 +7,14 @@ import ComposableArchitecture
 import SwiftUI
 
 @Reducer
-struct MessageTitleFeature: Sendable {
-    enum TitleType: Equatable, Sendable {
+public struct MessageTitleFeature: Sendable {
+    public enum TitleType: Equatable, Sendable {
         case placeholder(String)
         case title(String)
     }
     
     @ObservableState
-    struct State: Equatable, Sendable {
+    public struct State: Equatable, Sendable {
         var title: TitleType = .placeholder("New Conversation")
         
         var displayTitle: String {
@@ -34,17 +34,17 @@ struct MessageTitleFeature: Sendable {
         }
     }
     
-    enum Action: Equatable, Sendable {
+    public enum Action: Equatable, Sendable {
         case rename(String)
         case stream(Model, [ConversationItem])
         
         @CasePathable
-        enum DelegateAction: Equatable, Sendable {
+        public enum DelegateAction: Equatable, Sendable {
             case error(String)
         }
 
         @CasePathable
-        enum InternalAction: Equatable, Sendable {
+        public enum InternalAction: Equatable, Sendable {
             case llmEvent(LLMStreamEvent)
         }
 
@@ -56,7 +56,7 @@ struct MessageTitleFeature: Sendable {
         case llmStream
     }
     
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             case let .rename(text):

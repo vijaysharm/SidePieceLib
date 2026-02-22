@@ -7,7 +7,7 @@ import ComposableArchitecture
 import Foundation
 
 @Reducer
-struct ConversationPersistenceFeature {
+public struct ConversationPersistenceFeature: Sendable {
     @Dependency(\.mainQueue) var mainQueue
     @Dependency(\.conversationStorageClient) var conversationStorageClient
     
@@ -15,7 +15,7 @@ struct ConversationPersistenceFeature {
         case draftSave(UUID)
     }
 
-    var body: some ReducerOf<ProjectFeature> {
+    public var body: some ReducerOf<ProjectFeature> {
         Reduce { state, action in
             switch action {
             // Stream completed

@@ -6,7 +6,7 @@
 import ComposableArchitecture
 import SwiftUI
 
-enum ToolCallStatus: Equatable, Sendable {
+public enum ToolCallStatus: Equatable, Sendable {
     case streaming              // Arguments still arriving
     case waitingForPriorTool    // Waiting for earlier tool to get permission
     case pendingPermission      // Waiting for user approval (this is the active one)
@@ -26,26 +26,26 @@ enum ToolCallStatus: Equatable, Sendable {
     }
 }
 
-enum ToolPermissionDecision: Equatable, Sendable {
+public enum ToolPermissionDecision: Equatable, Sendable {
     case allowOnce
     case allowAlways
     case deny
 }
 
-enum ToolExecutionError: LocalizedError, Equatable {
+public enum ToolExecutionError: LocalizedError, Equatable {
     case unknown(String)
 }
 
-enum AllowAction: String, CaseIterable, Equatable, Sendable {
+public enum AllowAction: String, CaseIterable, Equatable, Sendable {
     case allowOnce = "Allow Once"
     case allowAlways = "Allow Always"
 }
 
 @Reducer
-struct ToolCallBlockFeature: Sendable {
+public struct ToolCallBlockFeature: Sendable {
     @ObservableState
-    struct State: Identifiable, Equatable, Sendable {
-        let id: UUID
+    public struct State: Identifiable, Equatable, Sendable {
+        public let id: UUID
         let toolCallId: String
         var name: String
         var arguments: String
@@ -55,14 +55,14 @@ struct ToolCallBlockFeature: Sendable {
         var selectedAllowAction: AllowAction = .allowAlways
     }
 
-    enum Action: Equatable, Sendable {
+    public enum Action: Equatable, Sendable {
         @CasePathable
-        enum DelegateAction: Equatable, Sendable {
+        public enum DelegateAction: Equatable, Sendable {
             case response(ToolPermissionDecision)
         }
 
         @CasePathable
-        enum InternalAction: Equatable, Sendable {
+        public enum InternalAction: Equatable, Sendable {
             case toggleExpanded
             case setAllowAction(AllowAction)
         }
@@ -71,7 +71,7 @@ struct ToolCallBlockFeature: Sendable {
         case delegate(DelegateAction)
     }
 
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             case .internal(.toggleExpanded):

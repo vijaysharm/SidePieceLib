@@ -6,9 +6,9 @@
 import ComposableArchitecture
 import Foundation
 
-protocol SettingIdentifiable: Hashable, Sendable, CustomStringConvertible {}
+public protocol SettingIdentifiable: Hashable, Sendable, CustomStringConvertible {}
 
-enum SettingType: Equatable, Sendable {
+public enum SettingType: Equatable, Sendable {
     case toggle(StorageKey<Bool>)
     case text(placeholder: String, StorageKey<String>)
     case dropdown(options: IdentifiedArrayOf<Option>, StorageKey<String>)
@@ -16,38 +16,38 @@ enum SettingType: Equatable, Sendable {
     case button(title: String) // I think should be sending out some kind of Action
     case secureText(placeholder: String, StorageKey<String>)
 
-    struct Option: Equatable, Sendable, Identifiable {
-        let id: String
+    public struct Option: Equatable, Sendable, Identifiable {
+        public let id: String
         let title: String
     }
 }
 
-enum SettingValue: Equatable, Sendable {
+public enum SettingValue: Equatable, Sendable {
     case bool(Bool)
     case string(String)
     case secure(String)
 }
 
-struct SettingItem: Equatable, Identifiable, Sendable {
-    struct ID: Hashable, @unchecked Sendable, CustomStringConvertible {
-        let id: AnyHashable
-        let description: String
+public struct SettingItem: Equatable, Identifiable, Sendable {
+    public struct ID: Hashable, @unchecked Sendable, CustomStringConvertible {
+        public let id: AnyHashable
+        public let description: String
 
-        init<H: SettingIdentifiable>(_ base: H) {
+        public init<H: SettingIdentifiable>(_ base: H) {
             self.id = AnyHashable(base)
             self.description = base.description
         }
 
-        static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id }
-        func hash(into hasher: inout Hasher) { hasher.combine(id) }
+        public static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id }
+        public func hash(into hasher: inout Hasher) { hasher.combine(id) }
     }
 
-    let id: ID
+    public let id: ID
     let title: String
     let description: String
     let type: SettingType
 
-    init(
+    public init(
         id: some SettingIdentifiable,
         title: String,
         description: String,
@@ -59,7 +59,7 @@ struct SettingItem: Equatable, Identifiable, Sendable {
         self.type = type
     }
     
-    static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id }
+    public static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id }
 }
 
 extension SettingItem {
@@ -88,64 +88,64 @@ extension SettingItem {
     }
 }
 
-struct SettingSection: Equatable, Identifiable, Sendable {
-    struct ID: Hashable, @unchecked Sendable, CustomStringConvertible {
-        let id: AnyHashable
-        let description: String
+public struct SettingSection: Equatable, Identifiable, Sendable {
+    public struct ID: Hashable, @unchecked Sendable, CustomStringConvertible {
+        public let id: AnyHashable
+        public let description: String
 
         init<H: SettingIdentifiable>(_ base: H) {
             self.id = AnyHashable(base)
             self.description = base.description
         }
 
-        static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id }
-        func hash(into hasher: inout Hasher) { hasher.combine(id) }
+        public static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id }
+        public func hash(into hasher: inout Hasher) { hasher.combine(id) }
     }
 
-    let id: ID
+    public let id: ID
     let title: String
     var items: IdentifiedArrayOf<SettingItem>
 
-    init(id: ID, title: String, items: IdentifiedArrayOf<SettingItem>) {
+    public init(id: ID, title: String, items: IdentifiedArrayOf<SettingItem>) {
         self.id = id
         self.title = title
         self.items = items
     }
 
-    init(id: some SettingIdentifiable, title: String, items: IdentifiedArrayOf<SettingItem>) {
+    public init(id: some SettingIdentifiable, title: String, items: IdentifiedArrayOf<SettingItem>) {
         self.id = ID(id)
         self.title = title
         self.items = items
     }
 }
 
-struct SettingCategory: Equatable, Identifiable, Sendable {
-    struct ID: Hashable, @unchecked Sendable, CustomStringConvertible {
-        let id: AnyHashable
-        let description: String
+public struct SettingCategory: Equatable, Identifiable, Sendable {
+    public struct ID: Hashable, @unchecked Sendable, CustomStringConvertible {
+        public let id: AnyHashable
+        public let description: String
 
         init<H: SettingIdentifiable>(_ base: H) {
             self.id = AnyHashable(base)
             self.description = base.description
         }
 
-        static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id }
-        func hash(into hasher: inout Hasher) { hasher.combine(id) }
+        public static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id }
+        public func hash(into hasher: inout Hasher) { hasher.combine(id) }
     }
 
-    let id: ID
+    public let id: ID
     let title: String
     let icon: String
     var sections: IdentifiedArrayOf<SettingSection>
 
-    init(id: ID, title: String, icon: String, sections: IdentifiedArrayOf<SettingSection>) {
+    public init(id: ID, title: String, icon: String, sections: IdentifiedArrayOf<SettingSection>) {
         self.id = id
         self.title = title
         self.icon = icon
         self.sections = sections
     }
 
-    init(id: some SettingIdentifiable, title: String, icon: String, sections: IdentifiedArrayOf<SettingSection>) {
+    public init(id: some SettingIdentifiable, title: String, icon: String, sections: IdentifiedArrayOf<SettingSection>) {
         self.id = ID(id)
         self.title = title
         self.icon = icon

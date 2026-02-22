@@ -7,9 +7,9 @@ import ComposableArchitecture
 import SwiftUI
 
 @Reducer
-struct ContextAgentToolbarFeature: Sendable {
+public struct ContextAgentToolbarFeature: Sendable {
     @ObservableState
-    struct State: Equatable, Sendable {
+    public struct State: Equatable, Sendable {
         var selectedAgent: Agent
         var availableAgents: [Agent] {
             agents.agents
@@ -31,16 +31,16 @@ struct ContextAgentToolbarFeature: Sendable {
         }
     }
     
-    enum Action: Equatable, Sendable {
+    public enum Action: Equatable, Sendable {
         case selectNextAgent
         
         @CasePathable
-        enum DelegateAction: Equatable, Sendable {
+        public enum DelegateAction: Equatable, Sendable {
             case selectNewModel(Model)
         }
 
         @CasePathable
-        enum InternalAction: Equatable, Sendable {
+        public enum InternalAction: Equatable, Sendable {
             case selectAgent(Agent)
             case selectModel(Model)
         }
@@ -49,7 +49,7 @@ struct ContextAgentToolbarFeature: Sendable {
         case delegate(DelegateAction)
     }
     
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             case .selectNextAgent:

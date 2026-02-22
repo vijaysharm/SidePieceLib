@@ -6,10 +6,10 @@ import ComposableArchitecture
 import SwiftUI
 
 @Reducer
-struct DeleteConfirmationFeature {
+public struct DeleteConfirmationFeature: Sendable {
     @ObservableState
-    struct State: Equatable {
-        enum Kind: Equatable {
+    public struct State: Equatable {
+        public enum Kind: Equatable {
             case conversation(id: UUID, title: String)
             case project(id: UUID, title: String, url: URL)
         }
@@ -39,18 +39,18 @@ struct DeleteConfirmationFeature {
         }
     }
 
-    enum Action: Equatable {
+    public enum Action: Equatable {
         case cancel
         case delegate(DelegateAction)
 
         @CasePathable
-        enum DelegateAction: Equatable {
+        public enum DelegateAction: Equatable {
             case confirmDeleteConversation(UUID)
             case confirmRemoveProject(id: UUID, url: URL)
         }
     }
 
-    var body: some ReducerOf<Self> {
+    public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             case .cancel:
