@@ -19,8 +19,8 @@ public struct StorageKeyIdentifier: StorageKeyIdentifiable, Identifiable, @unche
 
 public struct StorageKey<T: Hashable & Sendable>: Sendable, Identifiable, Hashable {
     public let id: StorageKeyIdentifier
-    let read: @Sendable () throws -> T
-    let write: @Sendable (T) throws -> Void
+    public let read: @Sendable () throws -> T
+    public let write: @Sendable (T) throws -> Void
     
     public init(
         id: any StorageKeyIdentifiable,

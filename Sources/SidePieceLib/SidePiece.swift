@@ -42,10 +42,14 @@ public struct SidePieceAppFeature: Sendable {
     }
 }
 
-struct SidePieceAppView: View {
+public struct SidePieceAppView: View {
     @Bindable var store: StoreOf<SidePieceAppFeature>
+
+    public init(store: StoreOf<SidePieceAppFeature>) {
+        self.store = store
+    }
     
-    var body: some View {
+    public var body: some View {
         switch store.state {
         case .loading:
             if let store = store.scope(state: \.loading, action: \.loading) {
