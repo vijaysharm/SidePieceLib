@@ -22,7 +22,7 @@ public struct StorageKey<T: Hashable & Sendable>: Sendable, Identifiable, Hashab
     let read: @Sendable () throws -> T
     let write: @Sendable (T) throws -> Void
     
-    init(
+    public init(
         id: any StorageKeyIdentifiable,
         read: @escaping @Sendable (StorageKeyIdentifier) throws -> T,
         write: @escaping @Sendable (StorageKeyIdentifier, T) throws -> Void

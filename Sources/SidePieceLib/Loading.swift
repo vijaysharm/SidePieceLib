@@ -10,7 +10,11 @@ import SwiftUI
 public struct LoadingFeature: Sendable {
     @ObservableState
     public struct State: Equatable {
-        var categories: IdentifiedArrayOf<SettingCategory>
+        public var categories: IdentifiedArrayOf<SettingCategory>
+        
+        public init(categories: IdentifiedArrayOf<SettingCategory>) {
+            self.categories = categories
+        }
     }
     
     public enum Action: Equatable {

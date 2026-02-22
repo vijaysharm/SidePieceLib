@@ -5,8 +5,13 @@
 
 
 public struct Agents: Equatable, Sendable {
-    let agents: [Agent]
-    let `default`: Agent
+    public let agents: [Agent]
+    public let `default`: Agent
+    
+    public init(agents: [Agent], `default`: Agent) {
+        self.agents = agents
+        self.default = `default`
+    }
 }
 
 extension Agents {

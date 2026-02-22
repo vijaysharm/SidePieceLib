@@ -8,7 +8,7 @@ import DependenciesMacros
 
 @DependencyClient
 public struct AgentClient: Sendable {
-    var agents: @Sendable () async throws -> Agents
+    public var agents: @Sendable () async throws -> Agents
 }
 
 extension AgentClient: DependencyKey {

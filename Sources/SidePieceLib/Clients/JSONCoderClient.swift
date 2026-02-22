@@ -9,7 +9,7 @@ import Foundation
 
 @DependencyClient
 public struct JSONCoderClient: Sendable {
-    func decode<T: Decodable>(
+    public func decode<T: Decodable>(
         _ type: T.Type,
         from data: Data,
         decoding: JSONDecoder.KeyDecodingStrategy = .useDefaultKeys
@@ -25,7 +25,7 @@ public struct JSONCoderClient: Sendable {
         }
     }
     
-    func encode<T: Encodable>(
+    public func encode<T: Encodable>(
         _ value: T,
         format: JSONEncoder.OutputFormatting = [.prettyPrinted, .sortedKeys],
         encoding: JSONEncoder.KeyEncodingStrategy = .useDefaultKeys

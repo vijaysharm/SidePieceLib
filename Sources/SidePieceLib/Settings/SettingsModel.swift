@@ -124,7 +124,7 @@ public struct SettingCategory: Equatable, Identifiable, Sendable {
         public let id: AnyHashable
         public let description: String
 
-        init<H: SettingIdentifiable>(_ base: H) {
+        public init<H: SettingIdentifiable>(_ base: H) {
             self.id = AnyHashable(base)
             self.description = base.description
         }

@@ -266,7 +266,7 @@ struct RootView: View {
 }
 
 extension StorageKey where T == String {
-    static func keyChainStorageKey(_ id: String) -> Self {
+    public static func keyChainStorageKey(_ id: String) -> Self {
         StorageKey(id: id) { id in
             @Dependency(\.keychainClient) var keychainClient
             guard let data = try? keychainClient.read(id) else { return "" }

@@ -9,14 +9,14 @@ import Foundation
 
 @DependencyClient
 public struct MessageItemClient: Sendable {
-    var systemPrompt: @Sendable (PromptContext) async throws -> String?
+    public var systemPrompt: @Sendable (PromptContext) async throws -> String?
 }
 
 public extension MessageItemClient {
-    struct PromptContext: Sendable, Equatable {
-        let model: Model
-        let agent: Agent
-        let projectURL: URL
+    public struct PromptContext: Sendable, Equatable {
+        public let model: Model
+        public let agent: Agent
+        public let projectURL: URL
     }
 }
 
