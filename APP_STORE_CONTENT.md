@@ -33,8 +33,8 @@ API keys are stored in the macOS Keychain — never in plain-text config files. 
 **A native Mac experience.**
 SidePiece is built entirely in SwiftUI. It supports keyboard shortcuts, multi-project navigation, model selection, inline attachments, and a responsive sidebar — all designed to feel like a first-class Mac app, not a wrapped web view.
 
-**Open source and transparent.**
-SidePiece is fully open source. Inspect every line of code, contribute improvements, or build your own AI assistant on top of the library. No black boxes, no hidden telemetry — just honest software you can trust and verify.
+**Built entirely on open source.**
+SidePiece is built using an entirely open source stack. Browse the source, learn how it works, contribute improvements, or use the library as a foundation to build your own AI assistant.
 
 Whether you're debugging a tricky issue, exploring an unfamiliar codebase, drafting documentation, or just need a second opinion on an architecture decision, SidePiece puts the best AI models at your fingertips without leaving your workflow.
 
