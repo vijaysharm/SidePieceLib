@@ -24,6 +24,7 @@ public struct LoadingFeature: Sendable {
         @CasePathable
         public enum DelegateAction: Equatable {
             case ready(RootFeature.State)
+            case failed(String)
         }
     }
     
@@ -77,6 +78,8 @@ public struct LoadingFeature: Sendable {
                         )
                     )
                     await send(.delegate(.ready(state)))
+                } catch: { error, send in
+                    await send(.delegate(.failed("\(error)")))
                 }
             case .delegate:
                 return .none
