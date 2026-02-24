@@ -10,7 +10,10 @@ import Foundation
 @DependencyClient
 public struct ToolRegistryClient: Sendable {
     public var register: @Sendable (Tool) -> Void
-    public var execute: @Sendable (_ name: String, _ arguments: String, _ projectURL: URL) async throws -> String
+    public var execute: @Sendable (_ name: String, _ arguments: String, _ userResponse: String?, _ projectURL: URL) async throws -> String
+
+    /// Returns the interaction type declared by the named tool, or `.permission` if unknown.
+    public var interaction: @Sendable (_ name: String) -> ToolInteraction = { _ in .permission }
 }
 
 extension ToolRegistryClient: DependencyKey {
@@ -22,14 +25,19 @@ extension ToolRegistryClient: DependencyKey {
                     $0[tool.id] = tool
                 }
             },
-            execute: { name, arguments, projectURL in
+            execute: { name, arguments, userResponse, projectURL in
                 guard let tool = registry.withValue({
                     $0[name]
                 }) else {
                     throw ToolExecutionError.unknown("Unknown tool: \(name)")
                 }
 
-                return try await tool.execute(arguments, projectURL)
+                return try await tool.execute(arguments, userResponse, projectURL)
+            },
+            interaction: { name in
+                registry.withValue {
+                    $0[name]?.interaction ?? .permission
+                }
             }
         )
     }()

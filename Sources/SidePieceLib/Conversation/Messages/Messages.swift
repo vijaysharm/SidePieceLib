@@ -33,7 +33,8 @@ public struct MessagesFeature: Sendable {
     }
 
     @Dependency(\.uuid) var uuid
-    
+    @Dependency(\.toolRegistryClient) var toolRegistryClient
+
     public var body: some ReducerOf<Self> {
         Scope(state: \.title, action: \.title) {
             MessageTitleFeature()
@@ -106,13 +107,17 @@ public struct MessagesFeature: Sendable {
                 return .send(.title(.stream(model, history)))
 
             case let .messageItems(.element(id, action: .response(.delegate(.executeToolCall(toolCall))))):
-                if state.allowedTools.contains(toolCall.name) {
+                let interaction = toolRegistryClient.interaction(toolCall.name)
+
+                // If the tool is in the "always allowed" set AND the interaction
+                // supports it, skip the interaction entirely and auto-approve.
+                if state.allowedTools.contains(toolCall.name), interaction.supportsAlwaysAllow {
                     return .send(.messageItems(.element(id: id, action: .response(.executeToolCallApproved(toolCall)))))
                 }
 
-                return .send(.messageItems(.element(id: id, action: .response(.requestToolPermission(toolCall)))))
+                return .send(.messageItems(.element(id: id, action: .response(.requestToolInteraction(toolCall, interaction)))))
 
-            case let .messageItems(.element(_, action: .response(.delegate(.toolPermissionResponse(.allowAlways, tool))))):
+            case let .messageItems(.element(_, action: .response(.delegate(.toolInteractionResponse(.allowAlways, tool))))):
                 // Intercept allowAlways to update conversation-level state
                 state.allowedTools.insert(tool.name)
                 return .none
