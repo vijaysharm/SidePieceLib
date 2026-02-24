@@ -24,13 +24,77 @@ public enum ToolInteraction: Equatable, Sendable {
     /// Single choice from a list of options.
     case choice(prompt: String, options: [String])
 
+    /// Structured questionnaire — 1 to 4 questions with selectable options.
+    /// The questions are defined by the tool's arguments (parsed at render time).
+    /// Users can select from predefined options or provide custom "Other" text.
+    case questionnaire
+
     /// Whether this interaction type supports "Allow Always" (skipping future interactions).
-    /// Text input and choice always require the user to respond, so "Always" is not offered.
+    /// Text input, choice, and questionnaire always require the user to respond.
     var supportsAlwaysAllow: Bool {
         switch self {
         case .permission, .confirmation: true
-        case .textInput, .choice: false
+        case .textInput, .choice, .questionnaire: false
         }
+    }
+}
+
+// MARK: - Questionnaire Types
+
+/// A single question in a questionnaire interaction, with selectable options.
+public struct QuestionItem: Equatable, Sendable, Decodable {
+    public let question: String
+    public let header: String
+    public let options: [QuestionOption]
+    public let multiSelect: Bool
+
+    public init(question: String, header: String, options: [QuestionOption], multiSelect: Bool) {
+        self.question = question
+        self.header = header
+        self.options = options
+        self.multiSelect = multiSelect
+    }
+}
+
+/// A selectable option within a questionnaire question.
+public struct QuestionOption: Equatable, Sendable, Decodable {
+    public let label: String
+    public let description: String
+    public let markdown: String?
+
+    public init(label: String, description: String, markdown: String? = nil) {
+        self.label = label
+        self.description = description
+        self.markdown = markdown
+    }
+}
+
+/// Tracks the user's in-progress answers to a questionnaire.
+public struct QuestionnaireState: Equatable, Sendable {
+    /// Selected option labels per question (keyed by question text).
+    public var answers: [String: Set<String>] = [:]
+    /// Custom "Other" text per question.
+    public var otherText: [String: String] = [:]
+    /// Questions where the "Other" option is selected.
+    public var otherSelected: Set<String> = []
+
+    /// Encodes the current answers as a JSON string for the tool result.
+    public var encodedJSON: String? {
+        guard !answers.isEmpty || !otherSelected.isEmpty else { return nil }
+        var result: [String: String] = [:]
+        let allQuestions = Set(answers.keys).union(otherSelected)
+        for question in allQuestions {
+            var selections = answers[question].map { Array($0).sorted() } ?? []
+            if otherSelected.contains(question),
+               let text = otherText[question],
+               !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                selections.append(text)
+            }
+            result[question] = selections.joined(separator: ", ")
+        }
+        guard let data = try? JSONSerialization.data(withJSONObject: ["answers": result]),
+              let json = String(data: data, encoding: .utf8) else { return nil }
+        return json
     }
 }
 
@@ -109,6 +173,38 @@ public struct ToolCallBlockFeature: Sendable {
         // User-provided response value for interactive tools (.textInput, .choice)
         var userInputText: String = ""
         var userSelectedOption: String?
+
+        // Questionnaire state
+        var questionnaire: QuestionnaireState = .init()
+
+        /// Parses the tool arguments as questionnaire questions.
+        /// Returns `nil` if the arguments don't match the expected format.
+        var parsedQuestions: [QuestionItem]? {
+            guard let data = arguments.data(using: .utf8) else { return nil }
+            struct Container: Decodable { let questions: [QuestionItem] }
+            let decoder = JSONDecoder()
+            decoder.keyDecodingStrategy = .convertFromSnakeCase
+            return (try? decoder.decode(Container.self, from: data))?.questions
+        }
+
+        /// The user response value to pass to tool execution, resolved from
+        /// whichever interaction type was used.
+        var resolvedUserResponse: String? {
+            if let json = questionnaire.encodedJSON { return json }
+            if !userInputText.isEmpty { return userInputText }
+            return userSelectedOption
+        }
+
+        /// Whether all questionnaire questions have been answered.
+        func isQuestionnaireComplete(questions: [QuestionItem]) -> Bool {
+            for q in questions {
+                let hasSelection = !(questionnaire.answers[q.question]?.isEmpty ?? true)
+                let hasOther = questionnaire.otherSelected.contains(q.question) &&
+                    !(questionnaire.otherText[q.question]?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
+                if !hasSelection && !hasOther { return false }
+            }
+            return true
+        }
     }
 
     public enum Action: Equatable, Sendable {
@@ -123,6 +219,9 @@ public struct ToolCallBlockFeature: Sendable {
             case setAllowAction(AllowAction)
             case setUserInputText(String)
             case setUserSelectedOption(String)
+            case toggleQuestionnaireOption(question: String, option: String, multiSelect: Bool)
+            case toggleQuestionnaireOther(question: String, multiSelect: Bool)
+            case setQuestionnaireOtherText(question: String, text: String)
         }
 
         case `internal`(InternalAction)
@@ -143,6 +242,35 @@ public struct ToolCallBlockFeature: Sendable {
                 return .none
             case let .internal(.setUserSelectedOption(option)):
                 state.userSelectedOption = option
+                return .none
+            case let .internal(.toggleQuestionnaireOption(question, option, multiSelect)):
+                if multiSelect {
+                    var current = state.questionnaire.answers[question] ?? []
+                    if current.contains(option) {
+                        current.remove(option)
+                    } else {
+                        current.insert(option)
+                    }
+                    state.questionnaire.answers[question] = current
+                } else {
+                    // Single select: replace selection, deselect Other
+                    state.questionnaire.answers[question] = [option]
+                    state.questionnaire.otherSelected.remove(question)
+                }
+                return .none
+            case let .internal(.toggleQuestionnaireOther(question, multiSelect)):
+                if state.questionnaire.otherSelected.contains(question) {
+                    state.questionnaire.otherSelected.remove(question)
+                } else {
+                    state.questionnaire.otherSelected.insert(question)
+                    if !multiSelect {
+                        // Single select: deselect predefined options
+                        state.questionnaire.answers[question] = []
+                    }
+                }
+                return .none
+            case let .internal(.setQuestionnaireOtherText(question, text)):
+                state.questionnaire.otherText[question] = text
                 return .none
             case .internal, .delegate:
                 return .none
@@ -239,6 +367,22 @@ struct ToolCallBlockView: View {
                                 }
                             }()
                         )
+
+                    case .questionnaire:
+                        InputControls(
+                            onCancel: {
+                                store.send(.delegate(.response(.deny)))
+                            },
+                            onSubmit: {
+                                if let json = store.questionnaire.encodedJSON {
+                                    store.send(.delegate(.response(.input(json))))
+                                }
+                            },
+                            isSubmitDisabled: {
+                                guard let questions = store.parsedQuestions else { return true }
+                                return !store.isQuestionnaireComplete(questions: questions)
+                            }()
+                        )
                     }
                 }
             }
@@ -302,6 +446,24 @@ struct ToolCallBlockView: View {
                         }
                     }
                     .padding(.leading, 16)
+
+                case .questionnaire:
+                    if let questions = store.parsedQuestions {
+                        QuestionnaireView(
+                            questions: questions,
+                            state: store.questionnaire,
+                            onToggleOption: { question, option, multiSelect in
+                                store.send(.internal(.toggleQuestionnaireOption(question: question, option: option, multiSelect: multiSelect)))
+                            },
+                            onToggleOther: { question, multiSelect in
+                                store.send(.internal(.toggleQuestionnaireOther(question: question, multiSelect: multiSelect)))
+                            },
+                            onSetOtherText: { question, text in
+                                store.send(.internal(.setQuestionnaireOtherText(question: question, text: text)))
+                            }
+                        )
+                        .padding(.leading, 16)
+                    }
                 }
             }
 
@@ -465,6 +627,115 @@ fileprivate struct AllowSplitButton: View {
     }
 }
 
+// MARK: - Questionnaire View
+
+fileprivate struct QuestionnaireView: View {
+    let questions: [QuestionItem]
+    let state: QuestionnaireState
+    let onToggleOption: (_ question: String, _ option: String, _ multiSelect: Bool) -> Void
+    let onToggleOther: (_ question: String, _ multiSelect: Bool) -> Void
+    let onSetOtherText: (_ question: String, _ text: String) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            ForEach(questions, id: \.question) { question in
+                VStack(alignment: .leading, spacing: 6) {
+                    // Header chip + question text
+                    HStack(spacing: 6) {
+                        Text(question.header)
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.primary.opacity(0.08))
+                            .cornerRadius(4)
+
+                        Text(question.question)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.primary)
+                    }
+
+                    // Options
+                    let selectedOptions = state.answers[question.question] ?? []
+                    let isOtherSelected = state.otherSelected.contains(question.question)
+
+                    ForEach(question.options, id: \.label) { option in
+                        let isSelected = selectedOptions.contains(option.label)
+                        Button {
+                            onToggleOption(question.question, option.label, question.multiSelect)
+                        } label: {
+                            HStack(alignment: .top, spacing: 6) {
+                                Image(systemName: iconName(selected: isSelected, multiSelect: question.multiSelect))
+                                    .font(.system(size: 12))
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(option.label)
+                                        .font(.system(size: 12))
+                                    if !option.description.isEmpty {
+                                        Text(option.description)
+                                            .font(.system(size: 10))
+                                            .foregroundStyle(.tertiary)
+                                    }
+                                }
+                            }
+                            .foregroundStyle(isSelected ? .primary : .secondary)
+                        }
+                        .buttonStyle(.plain)
+
+                        // Show markdown preview when option is selected and has markdown
+                        if isSelected, let markdown = option.markdown, !markdown.isEmpty {
+                            Text(markdown)
+                                .font(.system(size: 11, design: .monospaced))
+                                .foregroundStyle(.tertiary)
+                                .padding(8)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(Color.primary.opacity(0.04))
+                                .cornerRadius(6)
+                                .padding(.leading, 18)
+                        }
+                    }
+
+                    // "Other" option
+                    Button {
+                        onToggleOther(question.question, question.multiSelect)
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: iconName(selected: isOtherSelected, multiSelect: question.multiSelect))
+                                .font(.system(size: 12))
+                            Text("Other")
+                                .font(.system(size: 12))
+                        }
+                        .foregroundStyle(isOtherSelected ? .primary : .secondary)
+                    }
+                    .buttonStyle(.plain)
+
+                    // "Other" text field
+                    if isOtherSelected {
+                        TextField(
+                            "Enter your answer...",
+                            text: Binding(
+                                get: { state.otherText[question.question] ?? "" },
+                                set: { onSetOtherText(question.question, $0) }
+                            )
+                        )
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(size: 12, design: .monospaced))
+                        .padding(.leading, 18)
+                    }
+                }
+            }
+        }
+    }
+
+    private func iconName(selected: Bool, multiSelect: Bool) -> String {
+        if multiSelect {
+            return selected ? "checkmark.square.fill" : "square"
+        } else {
+            return selected ? "checkmark.circle.fill" : "circle"
+        }
+    }
+}
+
 #Preview {
     ScrollView {
         VStack(alignment: .leading, spacing: 16) {
@@ -529,6 +800,19 @@ fileprivate struct AllowSplitButton: View {
                 name: "select_branch",
                 arguments: "{}",
                 status: .awaitingUser(.choice(prompt: "Which branch?", options: ["main", "develop", "feature/auth"]))
+            )) {
+                ToolCallBlockFeature()
+            })
+
+            // Questionnaire interaction
+            ToolCallBlockView(store: Store(initialState: ToolCallBlockFeature.State(
+                id: UUID(),
+                toolCallId: "ask_user",
+                name: "ask_user_question",
+                arguments: """
+                {"questions": [{"question": "Which library should we use?", "header": "Library", "options": [{"label": "React", "description": "Popular UI framework"}, {"label": "Vue", "description": "Progressive framework"}], "multi_select": false}, {"question": "Which features do you want?", "header": "Features", "options": [{"label": "Auth", "description": "User authentication"}, {"label": "Caching", "description": "Response caching"}, {"label": "Logging", "description": "Structured logging"}], "multi_select": true}]}
+                """,
+                status: .awaitingUser(.questionnaire)
             )) {
                 ToolCallBlockFeature()
             })

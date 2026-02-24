@@ -205,13 +205,7 @@ public struct MessageItemResponseFeature: Sendable {
                 var effects: [Effect<Action>] = []
                 let projectURL = state.projectURL
 
-                // Extract user response from the tool call state
-                let userResponse: String? = {
-                    if !toolCall.userInputText.isEmpty {
-                        return toolCall.userInputText
-                    }
-                    return toolCall.userSelectedOption
-                }()
+                let userResponse = toolCall.resolvedUserResponse
 
                 if let block = state.blocks[id: toolCall.id], case var .toolCall(data) = block {
                     data.status = .executing
