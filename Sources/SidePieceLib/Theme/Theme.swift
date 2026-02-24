@@ -144,6 +144,51 @@ public extension Theme {
     )
 }
 
+// MARK: - Default Light Theme
+
+public extension Theme {
+    /// A built-in light theme suitable for light-mode appearances.
+    static let light = Theme(
+        overlayBackdrop: Color.black.opacity(0.4),
+
+        surfaceBackground: Color(nsColor: .controlBackgroundColor),
+        surfaceSecondary: Color(nsColor: .textBackgroundColor).opacity(0.5),
+        windowBackground: Color(nsColor: .windowBackgroundColor),
+
+        selectedFill: Color.black.opacity(0.08),
+        hoverFill: Color.black.opacity(0.04),
+        highlightedFill: Color.black.opacity(0.1),
+
+        border: Color.black.opacity(0.12),
+        borderSubtle: Color.black.opacity(0.08),
+
+        invertedContent: .white,
+
+        destructive: Color.red,
+        errorBackground: Color.red.opacity(0.08),
+        errorBorder: Color.red.opacity(0.25),
+
+        contextOverlayBackground: .white,
+        contextOverlaySelection: Color.secondary.opacity(0.2),
+        contextOverlayBorder: Color.black.opacity(0.15),
+
+        attachmentAccent: Color(nsColor: .controlAccentColor),
+        attachmentAccentFillOpacity: 0.1,
+        attachmentAccentBorderOpacity: 0.3,
+
+        featureIconCapsule: Color.black.opacity(0.06),
+
+        tabIndicator: Color.black.opacity(0.5),
+
+        tokenRingTrack: .gray.opacity(0.15),
+
+        settingsCardFill: Color.black.opacity(0.02),
+        settingsCardStroke: Color.black.opacity(0.08),
+
+        splashBorder: Color.black.opacity(0.15)
+    )
+}
+
 // MARK: - Environment Key
 
 private struct ThemeKey: EnvironmentKey {
