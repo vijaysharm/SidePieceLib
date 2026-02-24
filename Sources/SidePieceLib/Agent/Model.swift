@@ -289,6 +289,27 @@ public extension Model {
         )
     }
 
+    /// Create a Google Gemini model
+    static func gemini(
+        id: String,
+        modelId: String,
+        apiKey: String,
+        baseURL: URL = URL(string: "https://generativelanguage.googleapis.com/v1beta")!,
+        properties: Set<Model.Properties> = []
+    ) -> Model {
+        Model(
+            id: .init(id),
+            properties: properties,
+            stream: { items, options in
+                GeminiProvider(
+                    modelId: modelId,
+                    apiKey: apiKey,
+                    baseURL: baseURL
+                ).stream(items: items, options: options)
+            }
+        )
+    }
+
     /// Create a mock model for testing/preview (streams demo content)
     static func mock(
         id: String = "mock",
