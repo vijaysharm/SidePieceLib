@@ -211,6 +211,7 @@ public struct ModelSelectionFeature: Sendable {
 
 struct ModelSelectionView: View {
     @Bindable var store: StoreOf<ModelSelectionFeature>
+    @Environment(\.theme) private var theme
 
     var body: some View {
         VStack(spacing: 0) {
@@ -266,7 +267,7 @@ struct ModelSelectionView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: store.isTabBarVisible)
-        .background(Color(NSColor.controlBackgroundColor))
+        .background(theme.surfaceBackground)
     }
 }
 
@@ -274,6 +275,7 @@ struct ModelSelectionView: View {
 
 private struct SearchField: View {
     @Binding var text: String
+    @Environment(\.theme) private var theme
 
     var body: some View {
         HStack(spacing: 8) {
@@ -300,7 +302,7 @@ private struct SearchField: View {
         .padding(.vertical, 6)
         .background(
             RoundedRectangle(cornerRadius: 6)
-                .fill(Color(NSColor.textBackgroundColor).opacity(0.5))
+                .fill(theme.surfaceSecondary)
         )
     }
 }
@@ -309,6 +311,7 @@ private struct SearchField: View {
 
 private struct CategoryTabBar: View {
     @Bindable var store: StoreOf<ModelSelectionFeature>
+    @Environment(\.theme) private var theme
 
     var body: some View {
         VStack(spacing: 0) {
@@ -327,7 +330,7 @@ private struct CategoryTabBar: View {
             }
             Spacer()
         }
-        .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
+        .background(theme.surfaceBackground.opacity(0.5))
     }
 }
 
@@ -338,6 +341,7 @@ private struct CategoryTabButton: View {
     let isSelected: Bool
     @Bindable var store: StoreOf<ModelSelectionFeature>
 
+    @Environment(\.theme) private var theme
     @State private var isHovered = false
 
     var body: some View {
@@ -347,16 +351,16 @@ private struct CategoryTabButton: View {
             ZStack {
                 if isSelected {
                     RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.white.opacity(0.1))
+                        .fill(theme.selectedFill)
                 } else if isHovered {
                     RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.white.opacity(0.05))
+                        .fill(theme.hoverFill)
                 }
 
                 HStack(spacing: 0) {
                     if isSelected {
                         Rectangle()
-                            .fill(Color.white.opacity(0.6))
+                            .fill(theme.tabIndicator)
                             .frame(width: 3)
                             .clipShape(RoundedRectangle(cornerRadius: 1.5))
                     }
@@ -397,6 +401,7 @@ private struct ModelRowView: View {
     let isSelected: Bool
     @Bindable var store: StoreOf<ModelSelectionFeature>
 
+    @Environment(\.theme) private var theme
     @State private var localHover = false
 
     private var isHighlighted: Bool {
@@ -445,7 +450,7 @@ private struct ModelRowView: View {
         .padding(.horizontal, 10)
         .background(
             RoundedRectangle(cornerRadius: 6)
-                .fill(isSelected ? Color.white.opacity(0.1) : (isHighlighted ? Color.white.opacity(0.05) : Color.clear))
+                .fill(isSelected ? theme.selectedFill : (isHighlighted ? theme.hoverFill : Color.clear))
         )
         .contentShape(Rectangle())
         .onTapGesture {
@@ -464,6 +469,7 @@ private struct ModelRowView: View {
 private struct FeatureIconsView: View {
     let model: ModelSelectionFeature.DisplayModel
     let isHighlighted: Bool
+    @Environment(\.theme) private var theme
 
     private var hasAnyFeature: Bool {
         model.isFast || model.hasVision || model.hasReasoning ||
@@ -496,7 +502,7 @@ private struct FeatureIconsView: View {
             .padding(.vertical, 4)
             .background(
                 Capsule()
-                    .fill(Color(white: 0.15))
+                    .fill(theme.featureIconCapsule)
             )
         }
     }

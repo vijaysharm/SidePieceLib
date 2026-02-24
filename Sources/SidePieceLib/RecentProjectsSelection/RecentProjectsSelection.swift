@@ -241,7 +241,8 @@ struct RecentProjectRow: View {
     var isKeyboardSelected: Bool = false
     let onClick: () -> Void
     let onDoubleClick: () -> Void
-    
+
+    @Environment(\.theme) private var theme
     @State private var isHovering = false
     
     private var isHighlighted: Bool {
@@ -270,7 +271,7 @@ struct RecentProjectRow: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 4)
-                .fill(isHighlighted ? Color(white: 0.2) : Color.clear)
+                .fill(isHighlighted ? theme.highlightedFill : Color.clear)
         )
         .contentShape(Rectangle())
         .onTapGesture {

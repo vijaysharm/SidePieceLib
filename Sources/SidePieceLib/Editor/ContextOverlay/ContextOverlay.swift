@@ -217,6 +217,7 @@ extension ContextOverlayFeature.State {
 
 struct ContextOverlayView: View {
     @Bindable var store: StoreOf<ContextOverlayFeature>
+    @Environment(\.theme) private var theme
     @FocusState private var isTextFieldFocused: Bool
 
     var body: some View {
@@ -323,7 +324,7 @@ struct ContextOverlayView: View {
                                 RoundedRectangle(cornerRadius: 4)
                                     .fill(
                                         (store.hovered == item) || (store.selected == item) ?
-                                        Color.secondary.opacity(0.3) :
+                                        theme.contextOverlaySelection :
                                                 .clear
                                     )
                             )
@@ -345,11 +346,11 @@ struct ContextOverlayView: View {
             }
         }
         .padding(.top, 8)
-        .background(.black)
+        .background(theme.contextOverlayBackground)
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(.gray, lineWidth: 1)
+                .stroke(theme.contextOverlayBorder, lineWidth: 1)
         )
         .onAppear {
             store.send(.viewDidAppear)

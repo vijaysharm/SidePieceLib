@@ -140,6 +140,7 @@ struct ContextInputView: View {
     @Bindable var store: StoreOf<ContextInputFeature>
     var isStreaming: Bool = false
     var tokenUsage: TokenUsage
+    @Environment(\.theme) private var theme
 
     var body: some View {
         VStack(spacing: 0) {
@@ -187,7 +188,7 @@ struct ContextInputView: View {
                                 }
                             }
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(Color(NSColor.windowBackgroundColor))
+                            .foregroundStyle(theme.invertedContent)
                             .frame(width: 28, height: 28)
                             .background(Circle().fill(
                                 store.agentToolbar.selectedAgent.color
@@ -276,7 +277,7 @@ struct ContextInputView: View {
             ZStack {
                 Circle()
                     .stroke(
-                        .gray.opacity(0.1),
+                        theme.tokenRingTrack,
                         style: StrokeStyle(lineWidth: 2.5, lineCap: .round)
                     )
                     .frame(width: 14, height: 14)

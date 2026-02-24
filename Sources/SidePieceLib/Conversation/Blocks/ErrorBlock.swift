@@ -37,7 +37,8 @@ public struct ErrorBlockFeature: Sendable {
 
 struct ErrorBlockView: View {
     @Bindable var store: StoreOf<ErrorBlockFeature>
-    
+    @Environment(\.theme) private var theme
+
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill")
@@ -66,11 +67,11 @@ struct ErrorBlockView: View {
             Spacer()
         }
         .padding(12)
-        .background(Color.red.opacity(0.1))
+        .background(theme.errorBackground)
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.red.opacity(0.3), lineWidth: 1)
+                .stroke(theme.errorBorder, lineWidth: 1)
         )
     }
 }

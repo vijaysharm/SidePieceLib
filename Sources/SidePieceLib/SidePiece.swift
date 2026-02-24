@@ -44,21 +44,29 @@ public struct SidePieceAppFeature: Sendable {
 
 public struct SidePieceAppView: View {
     @Bindable var store: StoreOf<SidePieceAppFeature>
+    private let appTheme: Theme
 
-    public init(store: StoreOf<SidePieceAppFeature>) {
+    public init(
+        store: StoreOf<SidePieceAppFeature>,
+        theme: Theme = .dark
+    ) {
         self.store = store
+        self.appTheme = theme
     }
-    
+
     public var body: some View {
-        switch store.state {
-        case .loading:
-            if let store = store.scope(state: \.loading, action: \.loading) {
-                LoadingView(store: store)
-            }
-        case .root:
-            if let store = store.scope(state: \.root, action: \.root) {
-                RootView(store: store)
+        Group {
+            switch store.state {
+            case .loading:
+                if let store = store.scope(state: \.loading, action: \.loading) {
+                    LoadingView(store: store)
+                }
+            case .root:
+                if let store = store.scope(state: \.root, action: \.root) {
+                    RootView(store: store)
+                }
             }
         }
+        .theme(appTheme)
     }
 }

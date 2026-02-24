@@ -39,6 +39,7 @@ struct SettingsSectionCard: View {
     let section: SettingSection
     let categoryID: SettingCategory.ID
     let store: StoreOf<SettingsFeature>
+    @Environment(\.theme) private var theme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -70,11 +71,11 @@ struct SettingsSectionCard: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.white.opacity(0.03))
+                    .fill(theme.settingsCardFill)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    .stroke(theme.settingsCardStroke, lineWidth: 1)
             )
         }
     }

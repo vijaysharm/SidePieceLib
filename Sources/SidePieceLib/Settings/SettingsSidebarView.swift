@@ -66,6 +66,7 @@ struct SettingsCategoryRow: View {
     let isSelected: Bool
     let onSelect: () -> Void
 
+    @Environment(\.theme) private var theme
     @State private var isHovered = false
 
     var body: some View {
@@ -89,8 +90,8 @@ struct SettingsCategoryRow: View {
                 RoundedRectangle(cornerRadius: 6)
                     .fill(
                         isSelected
-                            ? Color.white.opacity(0.1)
-                            : (isHovered ? Color.white.opacity(0.05) : Color.clear)
+                            ? theme.selectedFill
+                            : (isHovered ? theme.hoverFill : Color.clear)
                     )
             )
             .contentShape(Rectangle())

@@ -29,10 +29,11 @@ public struct ImageOverlayFeature: Sendable {
 
 struct ImageOverlayView: View {
     let store: StoreOf<ImageOverlayFeature>
+    @Environment(\.theme) private var theme
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.85)
+            theme.overlayBackdrop
                 .contentShape(Rectangle())
                 .onTapGesture {
                     store.send(.dismiss)

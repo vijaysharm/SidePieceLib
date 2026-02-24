@@ -64,6 +64,7 @@ public struct DeleteConfirmationFeature: Sendable {
 
 struct DeleteConfirmationView: View {
     let store: StoreOf<DeleteConfirmationFeature>
+    @Environment(\.theme) private var theme
 
     var body: some View {
         VStack(spacing: 16) {
@@ -86,7 +87,7 @@ struct DeleteConfirmationView: View {
                 .buttonStyle(.plain)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                        .stroke(theme.border, lineWidth: 1)
                 )
 
                 Button(role: .destructive) {
@@ -104,12 +105,12 @@ struct DeleteConfirmationView: View {
                 .buttonStyle(.plain)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.red)
+                        .fill(theme.destructive)
                 )
             }
         }
         .padding(24)
-        .background(Color(NSColor.controlBackgroundColor))
+        .background(theme.surfaceBackground)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }

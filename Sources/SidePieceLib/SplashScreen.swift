@@ -175,6 +175,7 @@ public struct SplashScreenFeature: Sendable {
 
 struct SplashScreenView: View {
     @Bindable var store: StoreOf<SplashScreenFeature>
+    @Environment(\.theme) private var theme
     @FocusState private var isViewFocused: Bool
     
     var body: some View {
@@ -277,7 +278,7 @@ struct SplashScreenView: View {
         }
         .overlay(
             RoundedRectangle(cornerRadius: 4)
-                .stroke(Color(white: 0.3), lineWidth: 0.5)
+                .stroke(theme.splashBorder, lineWidth: 0.5)
         )
         .frame(maxWidth: 400)
     }
@@ -314,7 +315,8 @@ private struct ActionButtonRow: View {
     let button: ActionButton
     var isSelected: Bool = false
     let action: () -> Void
-    
+
+    @Environment(\.theme) private var theme
     @State private var isHovering = false
     
     private var isHighlighted: Bool {
@@ -338,7 +340,7 @@ private struct ActionButtonRow: View {
         .padding(.vertical, 14)
         .background(
             RoundedRectangle(cornerRadius: 4)
-                .fill(isHighlighted ? Color(white: 0.25) : Color.clear)
+                .fill(isHighlighted ? theme.highlightedFill : Color.clear)
                 .padding(2)
         )
         .contentShape(Rectangle())

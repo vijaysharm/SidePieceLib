@@ -485,6 +485,7 @@ public struct ProjectFeature: Sendable {
 
 struct ProjectView: View {
     @Bindable var store: StoreOf<ProjectFeature>
+    @Environment(\.theme) private var theme
 
     var body: some View {
         NavigationSplitView(
@@ -501,7 +502,7 @@ struct ProjectView: View {
                 .padding(.vertical, 8)
                 .background(
                     RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                        .stroke(theme.border, lineWidth: 1)
                 )
                 .disabled(!store.hasProjects)
                 .padding(.horizontal, 12)
@@ -518,7 +519,7 @@ struct ProjectView: View {
                 .buttonStyle(.plain)
                 .background(
                     RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                        .stroke(theme.border, lineWidth: 1)
                 )
                 .disabled(!store.hasProjects)
                 .padding(.horizontal, 12)
@@ -644,6 +645,7 @@ struct ProjectView: View {
 struct ProjectSectionView: View {
     let store: StoreOf<ProjectFeature>
     let projectID: ProjectItemFeature.State.ID
+    @Environment(\.theme) private var theme
 
     private var isProjectHovered: Bool {
         store.hoveringProjectID == projectID
@@ -709,7 +711,7 @@ struct ProjectSectionView: View {
                 .padding(.vertical, 6)
                 .background(
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(isProjectHovered ? Color.white.opacity(0.05) : Color.clear)
+                        .fill(isProjectHovered ? theme.hoverFill : Color.clear)
                 )
                 .onHover { hovering in
                     withAnimation(.easeInOut(duration: 0.04)) {
@@ -788,6 +790,7 @@ struct ConversationRowView: View {
     let onHover: (Bool) -> Void
     var onDelete: (() -> Void)? = nil
 
+    @Environment(\.theme) private var theme
     @FocusState private var isRenameFocused: Bool
 
     private var isRenaming: Bool {
@@ -868,7 +871,7 @@ struct ConversationRowView: View {
         .padding(.vertical, 8)
         .background(
             RoundedRectangle(cornerRadius: 6)
-                .fill(isSelected ? Color.white.opacity(0.1) : (isHovered ? Color.white.opacity(0.05) : Color.clear))
+                .fill(isSelected ? theme.selectedFill : (isHovered ? theme.hoverFill : Color.clear))
         )
         .contentShape(Rectangle())
         .onChange(of: isRenameFocused) { _, focused in
