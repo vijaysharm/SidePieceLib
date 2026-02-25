@@ -205,14 +205,22 @@ public struct MessageItemResponseFeature: Sendable {
                 var effects: [Effect<Action>] = []
                 let projectURL = state.projectURL
 
-                let userResponse = toolCall.resolvedUserResponse
+                // Merge user response into arguments if this was an interactive tool
+                var finalArguments = toolCall.arguments
+                if case let .awaitingUser(interaction) = toolCall.status {
+                    if let userValue = Self.resolveUserValue(from: toolCall, interaction: interaction) {
+                        finalArguments = interaction.mergeResponse(userValue, into: toolCall.arguments)
+                    }
+                }
 
                 if let block = state.blocks[id: toolCall.id], case var .toolCall(data) = block {
                     data.status = .executing
                     state.blocks[id: toolCall.id] = .toolCall(data)
+                    let name = toolCall.name
+                    let arguments = finalArguments
                     effects.append(.run { [toolRegistryClient] send in
                         do {
-                            let result = try await toolRegistryClient.execute(toolCall.name, toolCall.arguments, userResponse, projectURL)
+                            let result = try await toolRegistryClient.execute(name, arguments, projectURL)
                             await send(.internal(.toolCallComplete(toolCall, .success(result))))
                         } catch {
                             await send(.internal(.toolCallComplete(toolCall, .failure(.unknown("\(error)")))))
@@ -321,6 +329,21 @@ public struct MessageItemResponseFeature: Sendable {
         }
     }
 
+    /// Extracts the user's response value from the tool call state based on the interaction type.
+    /// Returns `nil` for permission/confirmation (no user data to merge).
+    static func resolveUserValue(from toolCall: ToolCallBlockFeature.State, interaction: ToolInteraction) -> String? {
+        switch interaction {
+        case .questionnaire:
+            return toolCall.questionnaire.encodedJSON
+        case .textInput:
+            let trimmed = toolCall.userInputText.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.isEmpty ? nil : toolCall.userInputText
+        case .choice:
+            return toolCall.userSelectedOption
+        case .permission, .confirmation:
+            return nil
+        }
+    }
 }
 
 extension MessageItemResponseFeature.State {

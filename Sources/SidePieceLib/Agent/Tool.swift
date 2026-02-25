@@ -12,27 +12,27 @@ public struct Tool: Identifiable, Hashable, Sendable {
 
     public let definition: ToolDefinition
 
-    /// The type of interaction this tool requires from the user before execution.
-    /// Defaults to `.permission` (the standard Allow/Deny gate).
-    public let interaction: ToolInteraction
+    /// Resolves the interaction type from the tool's arguments.
+    /// Called after the LLM emits a tool call, before presenting to the user.
+    /// Returns `.permission` for tools that don't need special interaction.
+    public let resolveInteraction: @Sendable (_ arguments: String) -> ToolInteraction
 
-    /// Executes the tool.
+    /// Executes the tool with final arguments (including any merged user response).
     ///
     /// - Parameters:
-    ///   - arguments: The raw JSON argument string from the LLM.
-    ///   - userResponse: The user's response for interactive tools (`.textInput`, `.choice`).
-    ///     `nil` for permission-based tools where the user simply approved.
+    ///   - arguments: The raw JSON argument string, potentially enriched with
+    ///     user input merged under the interaction's `argumentKey`.
     ///   - directory: The project root URL.
     /// - Returns: The tool result as a string.
-    public let execute: @Sendable (_ arguments: String, _ userResponse: String?, _ directory: URL) async throws -> String
+    public let execute: @Sendable (_ arguments: String, _ directory: URL) async throws -> String
 
     public init(
         definition: ToolDefinition,
-        interaction: ToolInteraction = .permission,
-        execute: @escaping @Sendable (_ arguments: String, _ userResponse: String?, _ directory: URL) async throws -> String
+        resolveInteraction: @escaping @Sendable (_ arguments: String) -> ToolInteraction = { _ in .permission },
+        execute: @escaping @Sendable (_ arguments: String, _ directory: URL) async throws -> String
     ) {
         self.definition = definition
-        self.interaction = interaction
+        self.resolveInteraction = resolveInteraction
         self.execute = execute
     }
 

@@ -113,42 +113,30 @@ public protocol TypedTool: Sendable {
     /// A human-readable description sent to the LLM explaining what the tool does.
     var description: String { get }
 
-    /// The type of user interaction this tool requires before execution.
+    /// Given the decoded input from the LLM, produces the interaction specification.
     /// Defaults to `.permission` (the standard Allow/Deny gate).
-    /// Override to `.textInput`, `.choice`, or `.confirmation` for interactive tools.
-    var interaction: ToolInteraction { get }
+    ///
+    /// Override for interactive tools to return `.textInput`, `.choice`,
+    /// `.questionnaire`, or `.confirmation`. The returned interaction's
+    /// `argumentKey` tells the framework where to merge the user's response
+    /// into the arguments JSON before decoding the final `Input`.
+    func resolveInteraction(for input: Input) -> ToolInteraction
 
     /// Executes the tool with decoded, strongly-typed inputs.
+    ///
+    /// For interactive tools, the `Input` will contain both the LLM-provided
+    /// fields and the user's response (merged under the interaction's `argumentKey`).
     ///
     /// - Parameters:
     ///   - input: The decoded input struct — no JSON parsing needed.
     ///   - projectURL: The root directory of the current project.
     /// - Returns: A strongly-typed output value that will be serialized for the LLM.
     func execute(_ input: Input, projectURL: URL) async throws -> Output
-
-    /// Executes the tool with decoded inputs and the user's interaction response.
-    ///
-    /// Override this method for interactive tools that need the user's input
-    /// (e.g. text fields, choices). The default implementation ignores
-    /// `userResponse` and delegates to `execute(_:projectURL:)`.
-    ///
-    /// - Parameters:
-    ///   - input: The decoded input struct — no JSON parsing needed.
-    ///   - userResponse: The value provided by the user during interaction,
-    ///     or `nil` for permission-based tools.
-    ///   - projectURL: The root directory of the current project.
-    /// - Returns: A strongly-typed output value that will be serialized for the LLM.
-    func execute(_ input: Input, userResponse: String?, projectURL: URL) async throws -> Output
 }
 
 extension TypedTool {
     /// Default interaction: simple permission gate.
-    public var interaction: ToolInteraction { .permission }
-
-    /// Default: ignores `userResponse` and calls `execute(_:projectURL:)`.
-    public func execute(_ input: Input, userResponse: String?, projectURL: URL) async throws -> Output {
-        try await execute(input, projectURL: projectURL)
-    }
+    public func resolveInteraction(for input: Input) -> ToolInteraction { .permission }
 
     /// The `ToolDefinition` derived from this tool's `name`, `description`, and
     /// `Input.schema`. Passed to the LLM in `LLMRequestOptions.tools`.
@@ -167,13 +155,25 @@ extension Tool {
     /// This initializer handles all the JSON plumbing so tool implementations
     /// never need to touch raw strings:
     /// 1. Decodes the raw JSON argument string into `T.Input` (snake_case → camelCase).
-    /// 2. Calls `typedTool.execute(_:userResponse:projectURL:)` with the strongly-typed input.
+    /// 2. Calls `typedTool.execute(_:projectURL:)` with the strongly-typed input.
     /// 3. Serializes `T.Output` back to a string for the LLM.
+    ///
+    /// For interactive tools, `resolveInteraction` decodes the arguments to
+    /// produce the interaction specification. If decoding fails, falls back
+    /// to `.permission`.
     public init<T: TypedTool>(_ typedTool: T) {
         self.init(
             definition: typedTool.definition,
-            interaction: typedTool.interaction,
-            execute: { arguments, userResponse, projectURL in
+            resolveInteraction: { arguments in
+                @Dependency(\.jsonCoder) var jsonCoder
+                guard let data = arguments.data(using: .utf8),
+                      let input = try? jsonCoder.decode(T.Input.self, from: data, decoding: .convertFromSnakeCase)
+                else {
+                    return .permission
+                }
+                return typedTool.resolveInteraction(for: input)
+            },
+            execute: { arguments, projectURL in
                 @Dependency(\.jsonCoder) var jsonCoder
                 guard let data = arguments.data(using: .utf8) else {
                     throw ToolExecutionError.unknown(
@@ -181,7 +181,7 @@ extension Tool {
                     )
                 }
                 let input = try jsonCoder.decode(T.Input.self, from: data, decoding: .convertFromSnakeCase)
-                let output = try await typedTool.execute(input, userResponse: userResponse, projectURL: projectURL)
+                let output = try await typedTool.execute(input, projectURL: projectURL)
                 return try output.toolResultString
             }
         )

@@ -19,15 +19,17 @@ public enum ToolInteraction: Equatable, Sendable {
     case confirmation(message: String)
 
     /// Free-form text input. User enters a string value before the tool runs.
-    case textInput(prompt: String, placeholder: String?)
+    /// The user's text is merged into the tool arguments under `argumentKey`.
+    case textInput(prompt: String, placeholder: String?, argumentKey: String)
 
     /// Single choice from a list of options.
-    case choice(prompt: String, options: [String])
+    /// The selected option is merged into the tool arguments under `argumentKey`.
+    case choice(prompt: String, options: [String], argumentKey: String)
 
     /// Structured questionnaire — 1 to 4 questions with selectable options.
-    /// The questions are defined by the tool's arguments (parsed at render time).
-    /// Users can select from predefined options or provide custom "Other" text.
-    case questionnaire
+    /// `questions` defines the form layout; user answers are merged into
+    /// the tool arguments under `argumentKey` as a JSON object.
+    case questionnaire(questions: [QuestionItem], argumentKey: String)
 
     /// Whether this interaction type supports "Allow Always" (skipping future interactions).
     /// Text input, choice, and questionnaire always require the user to respond.
@@ -36,6 +38,46 @@ public enum ToolInteraction: Equatable, Sendable {
         case .permission, .confirmation: true
         case .textInput, .choice, .questionnaire: false
         }
+    }
+
+    /// Merges the user's response value into the original arguments JSON
+    /// under the interaction's `argumentKey`. Returns the original arguments
+    /// unchanged for `.permission` and `.confirmation`.
+    func mergeResponse(_ value: String, into arguments: String) -> String {
+        let key: String
+        let isObjectValue: Bool
+
+        switch self {
+        case let .textInput(_, _, argumentKey):
+            key = argumentKey
+            isObjectValue = false
+        case let .choice(_, _, argumentKey):
+            key = argumentKey
+            isObjectValue = false
+        case let .questionnaire(_, argumentKey):
+            key = argumentKey
+            isObjectValue = true
+        case .permission, .confirmation:
+            return arguments
+        }
+
+        guard let argsData = arguments.data(using: .utf8),
+              var argsObject = try? JSONSerialization.jsonObject(with: argsData) as? [String: Any]
+        else { return arguments }
+
+        if isObjectValue,
+           let valueData = value.data(using: .utf8),
+           let valueObject = try? JSONSerialization.jsonObject(with: valueData) {
+            argsObject[key] = valueObject
+        } else {
+            argsObject[key] = value
+        }
+
+        guard let mergedData = try? JSONSerialization.data(withJSONObject: argsObject),
+              let mergedString = String(data: mergedData, encoding: .utf8)
+        else { return arguments }
+
+        return mergedString
     }
 }
 
@@ -78,7 +120,9 @@ public struct QuestionnaireState: Equatable, Sendable {
     /// Questions where the "Other" option is selected.
     public var otherSelected: Set<String> = []
 
-    /// Encodes the current answers as a JSON string for the tool result.
+    /// Encodes the current answers as a JSON string.
+    /// Returns the answers dict directly (e.g. `{"q1": "a1"}`).
+    /// The framework handles placing this under the correct `argumentKey`.
     public var encodedJSON: String? {
         guard !answers.isEmpty || !otherSelected.isEmpty else { return nil }
         var result: [String: String] = [:]
@@ -92,9 +136,20 @@ public struct QuestionnaireState: Equatable, Sendable {
             }
             result[question] = selections.joined(separator: ", ")
         }
-        guard let data = try? JSONSerialization.data(withJSONObject: ["answers": result]),
+        guard let data = try? JSONSerialization.data(withJSONObject: result),
               let json = String(data: data, encoding: .utf8) else { return nil }
         return json
+    }
+
+    /// Whether all questions have been answered (at least one selection or "Other" text per question).
+    public func isComplete(for questions: [QuestionItem]) -> Bool {
+        for q in questions {
+            let hasSelection = !(answers[q.question]?.isEmpty ?? true)
+            let hasOther = otherSelected.contains(q.question) &&
+                !(otherText[q.question]?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
+            if !hasSelection && !hasOther { return false }
+        }
+        return true
     }
 }
 
@@ -176,35 +231,6 @@ public struct ToolCallBlockFeature: Sendable {
 
         // Questionnaire state
         var questionnaire: QuestionnaireState = .init()
-
-        /// Parses the tool arguments as questionnaire questions.
-        /// Returns `nil` if the arguments don't match the expected format.
-        var parsedQuestions: [QuestionItem]? {
-            guard let data = arguments.data(using: .utf8) else { return nil }
-            struct Container: Decodable { let questions: [QuestionItem] }
-            let decoder = JSONDecoder()
-            decoder.keyDecodingStrategy = .convertFromSnakeCase
-            return (try? decoder.decode(Container.self, from: data))?.questions
-        }
-
-        /// The user response value to pass to tool execution, resolved from
-        /// whichever interaction type was used.
-        var resolvedUserResponse: String? {
-            if let json = questionnaire.encodedJSON { return json }
-            if !userInputText.isEmpty { return userInputText }
-            return userSelectedOption
-        }
-
-        /// Whether all questionnaire questions have been answered.
-        func isQuestionnaireComplete(questions: [QuestionItem]) -> Bool {
-            for q in questions {
-                let hasSelection = !(questionnaire.answers[q.question]?.isEmpty ?? true)
-                let hasOther = questionnaire.otherSelected.contains(q.question) &&
-                    !(questionnaire.otherText[q.question]?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
-                if !hasSelection && !hasOther { return false }
-            }
-            return true
-        }
     }
 
     public enum Action: Equatable, Sendable {
@@ -368,7 +394,7 @@ struct ToolCallBlockView: View {
                             }()
                         )
 
-                    case .questionnaire:
+                    case let .questionnaire(questions, _):
                         InputControls(
                             onCancel: {
                                 store.send(.delegate(.response(.deny)))
@@ -378,10 +404,7 @@ struct ToolCallBlockView: View {
                                     store.send(.delegate(.response(.input(json))))
                                 }
                             },
-                            isSubmitDisabled: {
-                                guard let questions = store.parsedQuestions else { return true }
-                                return !store.isQuestionnaireComplete(questions: questions)
-                            }()
+                            isSubmitDisabled: !store.questionnaire.isComplete(for: questions)
                         )
                     }
                 }
@@ -400,7 +423,7 @@ struct ToolCallBlockView: View {
                         .foregroundStyle(.secondary)
                         .padding(.leading, 16)
 
-                case let .textInput(prompt, placeholder):
+                case let .textInput(prompt, placeholder, _):
                     VStack(alignment: .leading, spacing: 4) {
                         Text(prompt)
                             .font(.system(size: 12))
@@ -424,7 +447,7 @@ struct ToolCallBlockView: View {
                     }
                     .padding(.leading, 16)
 
-                case let .choice(prompt, options):
+                case let .choice(prompt, options, _):
                     VStack(alignment: .leading, spacing: 4) {
                         Text(prompt)
                             .font(.system(size: 12))
@@ -447,23 +470,21 @@ struct ToolCallBlockView: View {
                     }
                     .padding(.leading, 16)
 
-                case .questionnaire:
-                    if let questions = store.parsedQuestions {
-                        QuestionnaireView(
-                            questions: questions,
-                            state: store.questionnaire,
-                            onToggleOption: { question, option, multiSelect in
-                                store.send(.internal(.toggleQuestionnaireOption(question: question, option: option, multiSelect: multiSelect)))
-                            },
-                            onToggleOther: { question, multiSelect in
-                                store.send(.internal(.toggleQuestionnaireOther(question: question, multiSelect: multiSelect)))
-                            },
-                            onSetOtherText: { question, text in
-                                store.send(.internal(.setQuestionnaireOtherText(question: question, text: text)))
-                            }
-                        )
-                        .padding(.leading, 16)
-                    }
+                case let .questionnaire(questions, _):
+                    QuestionnaireView(
+                        questions: questions,
+                        state: store.questionnaire,
+                        onToggleOption: { question, option, multiSelect in
+                            store.send(.internal(.toggleQuestionnaireOption(question: question, option: option, multiSelect: multiSelect)))
+                        },
+                        onToggleOther: { question, multiSelect in
+                            store.send(.internal(.toggleQuestionnaireOther(question: question, multiSelect: multiSelect)))
+                        },
+                        onSetOtherText: { question, text in
+                            store.send(.internal(.setQuestionnaireOtherText(question: question, text: text)))
+                        }
+                    )
+                    .padding(.leading, 16)
                 }
             }
 
@@ -788,7 +809,7 @@ fileprivate struct QuestionnaireView: View {
                 toolCallId: "git_commit",
                 name: "git_commit",
                 arguments: "{\"files\": [\"main.swift\"]}",
-                status: .awaitingUser(.textInput(prompt: "Enter commit message:", placeholder: "feat: ..."))
+                status: .awaitingUser(.textInput(prompt: "Enter commit message:", placeholder: "feat: ...", argumentKey: "commit_message"))
             )) {
                 ToolCallBlockFeature()
             })
@@ -799,7 +820,7 @@ fileprivate struct QuestionnaireView: View {
                 toolCallId: "select_branch",
                 name: "select_branch",
                 arguments: "{}",
-                status: .awaitingUser(.choice(prompt: "Which branch?", options: ["main", "develop", "feature/auth"]))
+                status: .awaitingUser(.choice(prompt: "Which branch?", options: ["main", "develop", "feature/auth"], argumentKey: "branch"))
             )) {
                 ToolCallBlockFeature()
             })
@@ -812,7 +833,20 @@ fileprivate struct QuestionnaireView: View {
                 arguments: """
                 {"questions": [{"question": "Which library should we use?", "header": "Library", "options": [{"label": "React", "description": "Popular UI framework"}, {"label": "Vue", "description": "Progressive framework"}], "multi_select": false}, {"question": "Which features do you want?", "header": "Features", "options": [{"label": "Auth", "description": "User authentication"}, {"label": "Caching", "description": "Response caching"}, {"label": "Logging", "description": "Structured logging"}], "multi_select": true}]}
                 """,
-                status: .awaitingUser(.questionnaire)
+                status: .awaitingUser(.questionnaire(
+                    questions: [
+                        QuestionItem(question: "Which library should we use?", header: "Library", options: [
+                            QuestionOption(label: "React", description: "Popular UI framework"),
+                            QuestionOption(label: "Vue", description: "Progressive framework"),
+                        ], multiSelect: false),
+                        QuestionItem(question: "Which features do you want?", header: "Features", options: [
+                            QuestionOption(label: "Auth", description: "User authentication"),
+                            QuestionOption(label: "Caching", description: "Response caching"),
+                            QuestionOption(label: "Logging", description: "Structured logging"),
+                        ], multiSelect: true),
+                    ],
+                    argumentKey: "answers"
+                ))
             )) {
                 ToolCallBlockFeature()
             })

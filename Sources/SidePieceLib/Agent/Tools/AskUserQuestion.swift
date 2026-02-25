@@ -21,7 +21,6 @@ public struct AskUserQuestionTool: TypedTool {
         "side-by-side previews for comparison. Supports single-select and " +
         "multi-select questions, optional markdown previews, and 1 to 4 " +
         "questions per call."
-    public let interaction: ToolInteraction = .questionnaire
 
     // MARK: - Input
 
@@ -29,7 +28,8 @@ public struct AskUserQuestionTool: TypedTool {
         /// The questions to present (1-4).
         public let questions: [QuestionItem]
 
-        /// Optional pre-filled answers keyed by question text.
+        /// User's answers keyed by question text. Populated by the framework
+        /// after the user completes the questionnaire (merged under `argumentKey`).
         public let answers: [String: String]?
 
         /// Optional per-question annotations (e.g. notes on previews).
@@ -84,10 +84,6 @@ public struct AskUserQuestionTool: TypedTool {
                             required: ["question", "header", "options", "multi_select"]
                         )
                     ),
-                    "answers": .objectProperty(
-                        description: "Optional pre-filled answers keyed by question text",
-                        properties: [:]
-                    ),
                     "annotations": .objectProperty(
                         description: "Optional per-question annotations",
                         properties: [:]
@@ -122,25 +118,23 @@ public struct AskUserQuestionTool: TypedTool {
         }
     }
 
+    // MARK: - Interaction
+
+    public func resolveInteraction(for input: Input) -> ToolInteraction {
+        .questionnaire(questions: input.questions, argumentKey: "answers")
+    }
+
     // MARK: - Execute
 
-    /// The user's answers arrive via `userResponse` as a JSON string from the
-    /// questionnaire UI. This method decodes them and returns the result.
-    public func execute(_ input: Input, userResponse: String?, projectURL: URL) async throws -> Output {
-        guard let response = userResponse,
-              let data = response.data(using: .utf8),
-              let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let answers = parsed["answers"] as? [String: String]
-        else {
-            throw ToolExecutionError.unknown("No user response received for ask_user_question")
+    /// Reads the user's answers directly from the typed input.
+    /// The framework merges the questionnaire responses into the arguments
+    /// under the "answers" key before decoding, so `input.answers` is populated.
+    public func execute(_ input: Input, projectURL: URL) async throws -> Output {
+        guard let answers = input.answers else {
+            throw ToolExecutionError.unknown("No answers provided for ask_user_question")
         }
 
         return Output(answers: answers)
-    }
-
-    /// Not used directly — the `userResponse` variant handles execution.
-    public func execute(_ input: Input, projectURL: URL) async throws -> Output {
-        throw ToolExecutionError.unknown("ask_user_question requires user interaction")
     }
 }
 
