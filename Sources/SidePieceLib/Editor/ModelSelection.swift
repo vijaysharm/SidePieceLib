@@ -252,7 +252,7 @@ struct ModelSelectionView: View {
                     }
                     HStack {
                         Text("Prices are approximate. Refer to provider websites for current pricing.")
-                            .font(.system(size: 8))
+                            .font(theme.typography.caption())
                             .foregroundStyle(.tertiary)
                             .padding(.leading)
                         Spacer()
@@ -281,11 +281,11 @@ private struct SearchField: View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
-                .font(.system(size: 14))
+                .font(theme.typography.body())
 
             TextField("Search models...", text: $text)
                 .textFieldStyle(.plain)
-                .font(.system(size: 13))
+                .font(theme.typography.body())
 
             if !text.isEmpty {
                 Button {
@@ -293,7 +293,7 @@ private struct SearchField: View {
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundStyle(.secondary)
-                        .font(.system(size: 12))
+                        .font(theme.typography.small())
                 }
                 .buttonStyle(.plain)
             }
@@ -413,7 +413,7 @@ private struct ModelRowView: View {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
                     Text(model.name)
-                        .font(.system(size: 13, weight: .medium))
+                        .font(theme.typography.body(weight: .medium))
                         .foregroundStyle(isSelected ? .white : .primary)
                         .lineLimit(1)
                     Spacer()
@@ -422,7 +422,7 @@ private struct ModelRowView: View {
 
                 HStack {
                     Text(model.descriptionText)
-                        .font(.system(size: 11))
+                        .font(theme.typography.small())
                         .foregroundStyle(isSelected ? .white.opacity(0.7) : .secondary)
                         .lineLimit(1)
 
@@ -430,7 +430,7 @@ private struct ModelRowView: View {
                         Text("·")
                             .foregroundStyle(isSelected ? Color.white.opacity(0.5) : Color.secondary.opacity(0.5))
                         Text(ctx)
-                            .font(.system(size: 11))
+                            .font(theme.typography.small())
                             .foregroundStyle(isSelected ? .white.opacity(0.7) : .secondary)
                     }
 
@@ -438,7 +438,7 @@ private struct ModelRowView: View {
                         Text("·")
                             .foregroundStyle(isSelected ? Color.white.opacity(0.5) : Color.secondary.opacity(0.5))
                         Text(cost)
-                            .font(.system(size: 11))
+                            .font(theme.typography.small())
                             .foregroundStyle(isSelected ? .white.opacity(0.7) : .secondary)
                     }
 
@@ -512,6 +512,7 @@ private struct FeatureIcon: View {
     let systemName: String
     let color: Color
     let tooltip: String
+    @Environment(\.theme) private var theme
 
     var body: some View {
         ZStack {
@@ -520,7 +521,7 @@ private struct FeatureIcon: View {
                 .frame(width: 18, height: 18)
 
             Image(systemName: systemName)
-                .font(.system(size: 9, weight: .medium))
+                .font(theme.typography.caption(weight: .medium))
                 .foregroundStyle(color)
         }
         .help(tooltip)
@@ -531,6 +532,7 @@ private struct FeatureIcon: View {
 
 private struct ArchivedSection: View {
     @Bindable var store: StoreOf<ModelSelectionFeature>
+    @Environment(\.theme) private var theme
 
     var body: some View {
         VStack(spacing: 0) {
@@ -539,15 +541,15 @@ private struct ArchivedSection: View {
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: store.isArchivedExpanded ? "chevron.down" : "chevron.right")
-                        .font(.system(size: 9, weight: .semibold))
+                        .font(theme.typography.caption(weight: .semibold))
                         .foregroundStyle(.tertiary)
 
                     Image(systemName: "archivebox")
-                        .font(.system(size: 11))
+                        .font(theme.typography.small())
                         .foregroundStyle(.tertiary)
 
                     Text("\(store.archivedModels.count) archived models")
-                        .font(.system(size: 11))
+                        .font(theme.typography.small())
                         .foregroundStyle(.secondary)
 
                     Spacer()

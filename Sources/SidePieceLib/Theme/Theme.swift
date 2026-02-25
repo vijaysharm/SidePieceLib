@@ -4,6 +4,104 @@
 //
 
 import SwiftUI
+#if os(macOS)
+import AppKit
+#endif
+
+// MARK: - Typography
+
+public struct ThemeTypography: Equatable, Sendable {
+
+    // MARK: Editor (NSFont-based text input)
+
+    /// Font size for the monospaced editor input.
+    /// Used to construct the NSFont passed into TextInputFeature.State.
+    public var editorFontSize: CGFloat
+
+    /// Line spacing for the editor input.
+    public var editorLineSpacing: CGFloat
+
+    /// Editor text color. Stored as SwiftUI Color; convert via
+    /// ``editorNSColor`` when constructing TextInputFeature.State.
+    public var editorForegroundColor: Color
+
+    // MARK: Content fonts (SwiftUI)
+
+    /// Heading size — conversation titles, page headings (default 20).
+    public var headingSize: CGFloat
+
+    /// Body text size — message content, descriptions (default 13).
+    public var bodySize: CGFloat
+
+    /// Code / monospaced display size — tool calls, error details (default 12).
+    public var codeSize: CGFloat
+
+    /// Small UI text size — metadata, row labels (default 11).
+    public var smallSize: CGFloat
+
+    /// Caption / fine-print size — timestamps, token counts (default 9).
+    public var captionSize: CGFloat
+
+    // MARK: Computed helpers – SwiftUI Font
+
+    public func heading(weight: Font.Weight = .bold) -> Font {
+        .system(size: headingSize, weight: weight)
+    }
+
+    public func body(weight: Font.Weight = .regular) -> Font {
+        .system(size: bodySize, weight: weight)
+    }
+
+    public func code(weight: Font.Weight = .regular) -> Font {
+        .system(size: codeSize, weight: weight, design: .monospaced)
+    }
+
+    public func small(weight: Font.Weight = .regular) -> Font {
+        .system(size: smallSize, weight: weight)
+    }
+
+    public func caption(weight: Font.Weight = .regular) -> Font {
+        .system(size: captionSize, weight: weight)
+    }
+
+    // MARK: Computed helpers – NSFont (for TextKit / NSTextView)
+
+    #if os(macOS)
+    /// Monospaced NSFont for the editor text input.
+    public var editorNSFont: NSFont {
+        .monospacedSystemFont(ofSize: editorFontSize, weight: .regular)
+    }
+
+    /// Editor foreground as NSColor for TextKit use.
+    public var editorNSColor: NSColor {
+        NSColor(editorForegroundColor)
+    }
+    #endif
+}
+
+public extension ThemeTypography {
+    static let `default` = ThemeTypography(
+        editorFontSize: 15,
+        editorLineSpacing: 4,
+        editorForegroundColor: .white,
+        headingSize: 20,
+        bodySize: 13,
+        codeSize: 12,
+        smallSize: 11,
+        captionSize: 9
+    )
+
+    static let light = ThemeTypography(
+        editorFontSize: 15,
+        editorLineSpacing: 4,
+        editorForegroundColor: Color(nsColor: .textColor),
+        headingSize: 20,
+        bodySize: 13,
+        codeSize: 12,
+        smallSize: 11,
+        captionSize: 9
+    )
+}
 
 // MARK: - Theme
 
@@ -97,6 +195,11 @@ public struct Theme: Equatable, Sendable {
 
     /// Splash screen action button border
     public var splashBorder: Color
+
+    // MARK: Typography
+
+    /// Typography settings (font sizes and editor font parameters).
+    public var typography: ThemeTypography
 }
 
 // MARK: - Default Dark Theme
@@ -140,7 +243,9 @@ public extension Theme {
         settingsCardFill: Color.white.opacity(0.03),
         settingsCardStroke: Color.white.opacity(0.1),
 
-        splashBorder: Color(white: 0.3)
+        splashBorder: Color(white: 0.3),
+
+        typography: .default
     )
 }
 
@@ -185,7 +290,9 @@ public extension Theme {
         settingsCardFill: Color.black.opacity(0.02),
         settingsCardStroke: Color.black.opacity(0.08),
 
-        splashBorder: Color.black.opacity(0.15)
+        splashBorder: Color.black.opacity(0.15),
+
+        typography: .light
     )
 }
 

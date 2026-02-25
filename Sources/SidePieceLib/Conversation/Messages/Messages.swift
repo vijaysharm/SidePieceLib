@@ -148,6 +148,7 @@ struct MessagesView: View {
     @Bindable var store: StoreOf<MessagesFeature>
     var isStreaming: Bool = false
     var tokenUsage: TokenUsage
+    @Environment(\.theme) private var theme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -165,7 +166,7 @@ struct MessagesView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .font(.system(size: 13, weight: .medium))
+            .font(theme.typography.body(weight: .medium))
             .padding(.bottom)
             .padding(.horizontal, 8)
 

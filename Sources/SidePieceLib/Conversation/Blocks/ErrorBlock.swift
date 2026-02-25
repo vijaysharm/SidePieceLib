@@ -47,18 +47,18 @@ struct ErrorBlockView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("Error: \(store.error.code)")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(theme.typography.body(weight: .semibold))
                     .foregroundStyle(.red)
                     .textSelection(.enabled)
 
                 Text(store.error.message)
-                    .font(.system(size: 13))
+                    .font(theme.typography.body())
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
 
                 if let underlying = store.error.underlying {
                     Text(underlying)
-                        .font(.system(size: 12, design: .monospaced))
+                        .font(theme.typography.code())
                         .foregroundStyle(.tertiary)
                         .textSelection(.enabled)
                 }

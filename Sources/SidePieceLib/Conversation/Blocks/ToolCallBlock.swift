@@ -89,6 +89,7 @@ public struct ToolCallBlockFeature: Sendable {
 
 struct ToolCallBlockView: View {
     @Bindable var store: StoreOf<ToolCallBlockFeature>
+    @Environment(\.theme) private var theme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -109,24 +110,24 @@ struct ToolCallBlockView: View {
 
                         if case .waitingForPriorTool = store.status {
                             Text("Queued")
-                                .font(.system(size: 10))
+                                .font(theme.typography.caption())
                                 .foregroundStyle(.tertiary)
                         }
 
                         if case .denied = store.status {
                             Text("Denied")
-                                .font(.system(size: 10))
+                                .font(theme.typography.caption())
                                 .foregroundStyle(.tertiary)
                         }
                         
                         if case .failed = store.status {
                             Text("Failed")
-                                .font(.system(size: 10))
+                                .font(theme.typography.caption())
                                 .foregroundStyle(.tertiary)
                         }
 
                         Image(systemName: store.isExpanded ? "chevron.down" : "chevron.right")
-                            .font(.system(size: 12))
+                            .font(theme.typography.small())
                             .foregroundStyle(.tertiary)
                     }
                 }
@@ -157,14 +158,14 @@ struct ToolCallBlockView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     if !store.arguments.isEmpty {
                         Text(formatJSON(store.arguments))
-                            .font(.system(size: 12, design: .monospaced))
+                            .font(theme.typography.code())
                             .foregroundStyle(.tertiary)
                             .textSelection(.enabled)
                     }
 
                     if let result = store.result {
                         Text(formatJSON(result))
-                            .font(.system(size: 12, design: .monospaced))
+                            .font(theme.typography.code())
                             .foregroundStyle(.tertiary)
                             .textSelection(.enabled)
                     }
@@ -198,13 +199,14 @@ fileprivate struct PermissionControls: View {
     let onDeny: () -> Void
     let onAllow: (ToolPermissionDecision) -> Void
     let onSelectAction: (AllowAction) -> Void
+    @Environment(\.theme) private var theme
 
     var body: some View {
         HStack(spacing: 16) {
             // Deny - plain text button
             Button(action: onDeny) {
                 Text("Deny")
-                    .font(.system(size: 10))
+                    .font(theme.typography.caption())
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
@@ -223,6 +225,7 @@ fileprivate struct AllowSplitButton: View {
     let selectedAction: AllowAction
     let onAllow: (ToolPermissionDecision) -> Void
     let onSelectAction: (AllowAction) -> Void
+    @Environment(\.theme) private var theme
 
     var body: some View {
         HStack(spacing: 0) {
@@ -235,7 +238,7 @@ fileprivate struct AllowSplitButton: View {
                 }
             } label: {
                 Text(selectedAction.rawValue)
-                    .font(.system(size: 10, weight: .medium))
+                    .font(theme.typography.caption(weight: .medium))
                     .foregroundStyle(.primary)
             }
             .buttonStyle(.plain)

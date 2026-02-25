@@ -72,7 +72,8 @@ public struct ContextAgentToolbarFeature: Sendable {
 
 struct ContextAgentToolbarView: View {
     @Bindable var store: StoreOf<ContextAgentToolbarFeature>
-    
+    @Environment(\.theme) private var theme
+
     var body: some View {
         // Left side - Mode and Model selectors
         HStack(spacing: 8) {
@@ -93,13 +94,13 @@ struct ContextAgentToolbarView: View {
                 } label: {
                     HStack(spacing: 4) {
                         store.selectedAgent.icon
-                            .font(.system(size: 12))
+                            .font(theme.typography.small())
                         Text(store.selectedAgent.name)
                             .lineLimit(1)
                             .truncationMode(.middle)
-                            .font(.system(size: 13, weight: .medium))
+                            .font(theme.typography.body(weight: .medium))
                         Image(systemName: "chevron.down")
-                            .font(.system(size: 9, weight: .semibold))
+                            .font(theme.typography.caption(weight: .semibold))
                     }
                     .foregroundStyle(store.selectedAgent.color)
                     .padding(.horizontal, 12)
@@ -113,11 +114,11 @@ struct ContextAgentToolbarView: View {
             } else {
                 HStack(spacing: 4) {
                     store.selectedAgent.icon
-                        .font(.system(size: 12))
+                        .font(theme.typography.small())
                     Text(store.selectedAgent.name)
                         .lineLimit(1)
                         .truncationMode(.middle)
-                        .font(.system(size: 13, weight: .medium))
+                        .font(theme.typography.body(weight: .medium))
                 }
                 .foregroundStyle(store.selectedAgent.color)
                 .padding(.horizontal, 12)
@@ -135,10 +136,10 @@ struct ContextAgentToolbarView: View {
                     Text(store.selectedModel.displayName)
                         .lineLimit(1)
                         .truncationMode(.tail)
-                        .font(.system(size: 13))
+                        .font(theme.typography.body())
                     if store.availableModels.count > 1 {
                         Image(systemName: "chevron.down")
-                            .font(.system(size: 9, weight: .semibold))
+                            .font(theme.typography.caption(weight: .semibold))
                     }
                 }
                 .buttonStyle(.plain)

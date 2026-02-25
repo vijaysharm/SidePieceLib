@@ -247,7 +247,7 @@ struct ContextInputView: View {
                     Image(systemName: "arrow.down.doc")
                         .font(.system(size: 24))
                     Text("Drop files here")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(theme.typography.body(weight: .medium))
                 }
                 .foregroundStyle(Color.accentColor)
             }

@@ -44,7 +44,8 @@ public struct ReasoningBlockFeature: Sendable {
 
 struct ReasoningBlockView: View {
     @Bindable var store: StoreOf<ReasoningBlockFeature>
-    
+    @Environment(\.theme) private var theme
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
@@ -54,26 +55,26 @@ struct ReasoningBlockView: View {
                     HStack(spacing: 8) {
                         Text("Thinking")
                             .foregroundStyle(.secondary)
-                        
+
                         if store.isStreaming {
                             ProgressView()
                                 .controlSize(.mini)
                         }
-                        
+
                         Image(systemName: store.isExpanded ? "chevron.down" : "chevron.right")
-                            .font(.system(size: 12))
+                            .font(theme.typography.small())
                             .foregroundStyle(.tertiary)
                     }
                 }
                 .buttonStyle(.plain)
-                
+
                 Spacer()
             }
             .animation(nil, value: store.isExpanded)
 
             if store.isExpanded {
                 Text(store.content)
-                    .font(.system(size: 13))
+                    .font(theme.typography.body())
                     .foregroundStyle(.secondary)
                     .padding(.leading, 24)
                     .textSelection(.enabled)
