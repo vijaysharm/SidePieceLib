@@ -380,7 +380,8 @@ struct ToolCallBlockView: View {
                             },
                             onSubmit: {
                                 if case .textInput = interaction {
-                                    store.send(.delegate(.response(.input(store.userInputText))))
+                                    let trimmed = store.userInputText.trimmingCharacters(in: .whitespacesAndNewlines)
+                                    store.send(.delegate(.response(.input(trimmed))))
                                 } else if let selected = store.userSelectedOption {
                                     store.send(.delegate(.response(.input(selected))))
                                 }
@@ -441,7 +442,7 @@ struct ToolCallBlockView: View {
                         .onSubmit {
                             let trimmed = store.userInputText.trimmingCharacters(in: .whitespacesAndNewlines)
                             if !trimmed.isEmpty {
-                                store.send(.delegate(.response(.input(store.userInputText))))
+                                store.send(.delegate(.response(.input(trimmed))))
                             }
                         }
                     }
@@ -453,7 +454,7 @@ struct ToolCallBlockView: View {
                             .font(.system(size: 12))
                             .foregroundStyle(.secondary)
 
-                        ForEach(options, id: \.self) { option in
+                        ForEach(Array(options.enumerated()), id: \.offset) { _, option in
                             Button {
                                 store.send(.internal(.setUserSelectedOption(option)))
                             } label: {
