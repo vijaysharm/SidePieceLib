@@ -166,12 +166,15 @@ extension Tool {
             definition: typedTool.definition,
             resolveInteraction: { arguments in
                 @Dependency(\.jsonCoder) var jsonCoder
-                guard let data = arguments.data(using: .utf8),
-                      let input = try? jsonCoder.decode(T.Input.self, from: data, decoding: .convertFromSnakeCase)
-                else {
-                    return .permission
+                guard let data = arguments.data(using: .utf8) else {
+                    return .confirmation(message: "Could not read tool arguments (invalid UTF-8)")
                 }
-                return typedTool.resolveInteraction(for: input)
+                do {
+                    let input = try jsonCoder.decode(T.Input.self, from: data, decoding: .convertFromSnakeCase)
+                    return typedTool.resolveInteraction(for: input)
+                } catch {
+                    return .confirmation(message: "Could not decode tool arguments: \(error)")
+                }
             },
             execute: { arguments, projectURL in
                 @Dependency(\.jsonCoder) var jsonCoder

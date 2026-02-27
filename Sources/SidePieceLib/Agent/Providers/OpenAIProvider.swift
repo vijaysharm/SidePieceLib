@@ -121,17 +121,12 @@ public struct OpenAIProvider: AIProvider, Sendable {
                             }
 
                         case "response.output_item.done":
-                            // Completed output item — only handle function_call as a
-                            // fallback for tool call completion. Text was already
-                            // streamed via response.output_text.delta events.
-                            if let item = obj["item"]?.objectValue,
-                               let itemType = item["type"]?.stringValue,
-                               itemType == "function_call" {
-                                let callId = item["call_id"]?.stringValue ?? "unknown"
-                                let args = item["arguments"]?.stringValue ?? toolCallArgs[callId] ?? "{}"
-                                let name = item["name"]?.stringValue ?? toolCallNames[callId] ?? "tool"
-                                continuation.yield(.toolCallEnd(id: callId, name: name, arguments: args))
-                            }
+                            // output_item.done fires after function_call_arguments.done
+                            // for function calls. Tool call completion is already handled
+                            // by function_call_arguments.done — emitting toolCallEnd again
+                            // here caused duplicate dispatch, corrupting tool state.
+                            // Text items were already streamed via output_text.delta.
+                            break
 
                         case "response.created",
                              "response.in_progress",

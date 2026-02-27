@@ -114,9 +114,14 @@ public struct MessageItemResponseFeature: Sendable {
                     status: .streaming
                 )
 
+                // Only process the first toolCallEnd for this tool — the OpenAI
+                // provider can emit duplicates (function_call_arguments.done AND
+                // output_item.done). Re-dispatching a tool that already left
+                // .streaming causes state corruption and decode failures.
+                guard tool.status == .streaming else { return .none }
+
                 tool.name = name
                 tool.arguments = arguments
-                tool.status = .streaming
                 state.blocks[id: tool.id] = .toolCall(tool)
 
                 return .send(.delegate(.executeToolCall(tool)))
@@ -337,7 +342,7 @@ public struct MessageItemResponseFeature: Sendable {
             return toolCall.questionnaire.encodedJSON
         case .textInput:
             let trimmed = toolCall.userInputText.trimmingCharacters(in: .whitespacesAndNewlines)
-            return trimmed.isEmpty ? nil : toolCall.userInputText
+            return trimmed.isEmpty ? nil : trimmed
         case .choice:
             return toolCall.userSelectedOption
         case .permission, .confirmation:
@@ -428,21 +433,26 @@ extension IdentifiedArrayOf where Element == ResponseBlockFeature.State {
                         output: result
                     ))
                 } else if case .denied = data.status {
-                    let denialResult = """
-                    {"error": "User denied permission to execute '\(data.name)'", "denied": true}
-                    """
-                    items.append(.toolResult(
-                        id: data.toolCallId,
-                        output: denialResult
-                    ))
+                    let denialObject: [String: Any] = [
+                        "error": "User denied permission to execute '\(data.name)'",
+                        "denied": true
+                    ]
+                    if let jsonData = try? JSONSerialization.data(withJSONObject: denialObject),
+                       let json = String(data: jsonData, encoding: .utf8) {
+                        items.append(.toolResult(
+                            id: data.toolCallId,
+                            output: json
+                        ))
+                    }
                 } else if case .failed(let errorMsg) = data.status {
-                    let failedResult = """
-                    {"error": "\(errorMsg)"}
-                    """
-                    items.append(.toolResult(
-                        id: data.toolCallId,
-                        output: failedResult
-                    ))
+                    let errorObject: [String: Any] = ["error": errorMsg]
+                    if let jsonData = try? JSONSerialization.data(withJSONObject: errorObject),
+                       let json = String(data: jsonData, encoding: .utf8) {
+                        items.append(.toolResult(
+                            id: data.toolCallId,
+                            output: json
+                        ))
+                    }
                 }
 
             case .error:
