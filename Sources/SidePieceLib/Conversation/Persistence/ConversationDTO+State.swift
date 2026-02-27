@@ -164,7 +164,7 @@ extension ToolCallStatus {
         case .denied: .denied
         case let .failed(msg): .failed(msg)
         // Non-terminal states map to completed (app was closed mid-operation)
-        case .streaming, .executing, .pendingPermission, .waitingForPriorTool: .completed
+        case .streaming, .executing, .awaitingUser, .waitingForPriorTool: .completed
         }
     }
 }

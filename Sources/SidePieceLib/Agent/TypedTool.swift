@@ -113,7 +113,19 @@ public protocol TypedTool: Sendable {
     /// A human-readable description sent to the LLM explaining what the tool does.
     var description: String { get }
 
+    /// Given the decoded input from the LLM, produces the interaction specification.
+    /// Defaults to `.permission` (the standard Allow/Deny gate).
+    ///
+    /// Override for interactive tools to return `.textInput`, `.choice`,
+    /// `.questionnaire`, or `.confirmation`. The returned interaction's
+    /// `argumentKey` tells the framework where to merge the user's response
+    /// into the arguments JSON before decoding the final `Input`.
+    func resolveInteraction(for input: Input) -> ToolInteraction
+
     /// Executes the tool with decoded, strongly-typed inputs.
+    ///
+    /// For interactive tools, the `Input` will contain both the LLM-provided
+    /// fields and the user's response (merged under the interaction's `argumentKey`).
     ///
     /// - Parameters:
     ///   - input: The decoded input struct — no JSON parsing needed.
@@ -123,6 +135,9 @@ public protocol TypedTool: Sendable {
 }
 
 extension TypedTool {
+    /// Default interaction: simple permission gate.
+    public func resolveInteraction(for input: Input) -> ToolInteraction { .permission }
+
     /// The `ToolDefinition` derived from this tool's `name`, `description`, and
     /// `Input.schema`. Passed to the LLM in `LLMRequestOptions.tools`.
     public var definition: ToolDefinition {
@@ -142,9 +157,25 @@ extension Tool {
     /// 1. Decodes the raw JSON argument string into `T.Input` (snake_case → camelCase).
     /// 2. Calls `typedTool.execute(_:projectURL:)` with the strongly-typed input.
     /// 3. Serializes `T.Output` back to a string for the LLM.
+    ///
+    /// For interactive tools, `resolveInteraction` decodes the arguments to
+    /// produce the interaction specification. If decoding fails, falls back
+    /// to `.permission`.
     public init<T: TypedTool>(_ typedTool: T) {
         self.init(
             definition: typedTool.definition,
+            resolveInteraction: { arguments in
+                @Dependency(\.jsonCoder) var jsonCoder
+                guard let data = arguments.data(using: .utf8) else {
+                    return .confirmation(message: "Could not read tool arguments (invalid UTF-8)")
+                }
+                do {
+                    let input = try jsonCoder.decode(T.Input.self, from: data, decoding: .convertFromSnakeCase)
+                    return typedTool.resolveInteraction(for: input)
+                } catch {
+                    return .confirmation(message: "Could not decode tool arguments: \(error)")
+                }
+            },
             execute: { arguments, projectURL in
                 @Dependency(\.jsonCoder) var jsonCoder
                 guard let data = arguments.data(using: .utf8) else {

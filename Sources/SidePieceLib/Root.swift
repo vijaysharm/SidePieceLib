@@ -62,11 +62,6 @@ public struct RootFeature: Sendable {
         Reduce { state, action in
             switch action {
             case .onAppear:
-//                    .onKeyPress(.escape) {
-//                        guard case .imageOverlay = store.destination else { return .ignored }
-//                        store.send(.destination(.presented(.imageOverlay(.dismiss))))
-//                        return .handled
-//                    }
                 return .concatenate(
                     .merge(
                         // TODO: I wonder if these should be done sequentially

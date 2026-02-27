@@ -11,6 +11,10 @@ import Foundation
 public struct ToolRegistryClient: Sendable {
     public var register: @Sendable (Tool) -> Void
     public var execute: @Sendable (_ name: String, _ arguments: String, _ projectURL: URL) async throws -> String
+
+    /// Resolves the interaction type for the named tool given its arguments,
+    /// or `.permission` if the tool is unknown.
+    public var resolveInteraction: @Sendable (_ name: String, _ arguments: String) -> ToolInteraction = { _, _ in .permission }
 }
 
 extension ToolRegistryClient: DependencyKey {
@@ -30,6 +34,11 @@ extension ToolRegistryClient: DependencyKey {
                 }
 
                 return try await tool.execute(arguments, projectURL)
+            },
+            resolveInteraction: { name, arguments in
+                registry.withValue {
+                    $0[name]?.resolveInteraction(arguments) ?? .permission
+                }
             }
         )
     }()
