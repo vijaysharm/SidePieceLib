@@ -5,7 +5,7 @@
 
 import Foundation
 
-struct ThemeBorderWidth: Sendable {
+public struct ThemeBorderWidth: Sendable {
     let hairline: CGFloat   // 0.5
     let thin: CGFloat       // 1
     let medium: CGFloat     // 2

@@ -22,7 +22,7 @@ extension EnvironmentValues {
 
 extension View {
     /// Injects the app theme into the environment for all descendant views.
-    func appTheme(_ theme: AppTheme = .default) -> some View {
+    public func appTheme(_ theme: AppTheme = .default) -> some View {
         environment(\.theme, theme)
     }
 }

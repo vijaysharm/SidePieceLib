@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-struct ThemeTypography: Sendable {
+public struct ThemeTypography: Sendable {
 
     // MARK: - Display / Icon sizes
 

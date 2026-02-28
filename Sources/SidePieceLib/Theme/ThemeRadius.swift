@@ -5,7 +5,7 @@
 
 import Foundation
 
-struct ThemeRadius: Sendable {
+public struct ThemeRadius: Sendable {
     let xs: CGFloat     // 4
     let sm: CGFloat     // 6
     let md: CGFloat     // 8

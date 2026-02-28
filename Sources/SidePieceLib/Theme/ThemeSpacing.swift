@@ -5,7 +5,7 @@
 
 import Foundation
 
-struct ThemeSpacing: Sendable {
+public struct ThemeSpacing: Sendable {
     let xxs: CGFloat   // 2
     let xs: CGFloat     // 4
     let sm: CGFloat     // 6

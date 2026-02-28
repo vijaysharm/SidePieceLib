@@ -6,7 +6,7 @@
 import SwiftUI
 
 extension AppTheme {
-    static let `default` = AppTheme(
+    public static let `default` = AppTheme(
         colors: .default,
         typography: .default,
         spacing: .default,
@@ -18,7 +18,7 @@ extension AppTheme {
 // MARK: - Colors
 
 extension ThemeColors {
-    static let `default` = ThemeColors(
+    public static let `default` = ThemeColors(
         // Backgrounds
         backgroundPrimary: Color(light: Color(white: 0.98), dark: Color(white: 0.1)),
         backgroundSecondary: Color(light: Color(white: 0.94), dark: Color(white: 0.15)),
@@ -71,7 +71,7 @@ extension ThemeColors {
 // MARK: - Typography
 
 extension ThemeTypography {
-    static let `default` = ThemeTypography(
+    public static let `default` = ThemeTypography(
         displayIcon: .system(size: 36),
         featureIcon: .system(size: 24),
         alertIcon: .system(size: 20),
@@ -99,7 +99,7 @@ extension ThemeTypography {
 // MARK: - Spacing
 
 extension ThemeSpacing {
-    static let `default` = ThemeSpacing(
+    public static let `default` = ThemeSpacing(
         xxs: 2,
         xs: 4,
         sm: 6,
@@ -114,7 +114,7 @@ extension ThemeSpacing {
 // MARK: - Radius
 
 extension ThemeRadius {
-    static let `default` = ThemeRadius(
+    public static let `default` = ThemeRadius(
         xs: 4,
         sm: 6,
         md: 8,
@@ -127,7 +127,7 @@ extension ThemeRadius {
 // MARK: - Border Width
 
 extension ThemeBorderWidth {
-    static let `default` = ThemeBorderWidth(
+    public static let `default` = ThemeBorderWidth(
         hairline: 0.5,
         thin: 1,
         medium: 2,

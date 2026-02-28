@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-struct ThemeColors: Sendable {
+public struct ThemeColors: Sendable {
 
     // MARK: - Backgrounds
 

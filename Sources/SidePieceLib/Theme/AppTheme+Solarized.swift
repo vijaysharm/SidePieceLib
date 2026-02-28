@@ -43,7 +43,7 @@ private enum Sol {
 // MARK: - Theme
 
 extension AppTheme {
-    static let solarized = AppTheme(
+    public static let solarized = AppTheme(
         colors: .solarized,
         typography: .solarized,
         spacing: .default,
@@ -108,7 +108,7 @@ extension ThemeColors {
 // MARK: - Typography
 
 extension ThemeTypography {
-    static let solarized = ThemeTypography(
+    public static let solarized = ThemeTypography(
         displayIcon: .system(size: 36, design: .monospaced),
         featureIcon: .system(size: 24, design: .monospaced),
         alertIcon: .system(size: 20, design: .monospaced),
@@ -136,7 +136,7 @@ extension ThemeTypography {
 // MARK: - Radius
 
 extension ThemeRadius {
-    static let solarized = ThemeRadius(
+    public static let solarized = ThemeRadius(
         xs: 2,
         sm: 3,
         md: 4,
@@ -149,7 +149,7 @@ extension ThemeRadius {
 // MARK: - Border Width
 
 extension ThemeBorderWidth {
-    static let solarized = ThemeBorderWidth(
+    public static let solarized = ThemeBorderWidth(
         hairline: 1,
         thin: 1.5,
         medium: 2,
