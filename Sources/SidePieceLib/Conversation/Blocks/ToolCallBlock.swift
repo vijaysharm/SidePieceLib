@@ -570,7 +570,7 @@ fileprivate struct PermissionControls: View {
                 .buttonStyle(.plain)
                 .padding(.horizontal, theme.spacing.lg)
                 .padding(.vertical, theme.spacing.sm)
-                .background(Color.primary.opacity(0.1))
+                .background(theme.colors.surfaceSelected)
                 .cornerRadius(theme.radius.sm)
             }
         }
@@ -602,7 +602,7 @@ fileprivate struct InputControls: View {
             .disabled(isSubmitDisabled)
             .padding(.horizontal, theme.spacing.lg)
             .padding(.vertical, theme.spacing.sm)
-            .background(Color.primary.opacity(isSubmitDisabled ? 0.05 : 0.1))
+            .background(isSubmitDisabled ? theme.colors.surfaceSubtle : theme.colors.surfaceSelected)
             .cornerRadius(theme.radius.sm)
         }
     }
@@ -651,7 +651,7 @@ fileprivate struct AllowSplitButton: View {
         }
         .padding(.horizontal, theme.spacing.lg)
         .padding(.vertical, theme.spacing.sm)
-        .background(Color.primary.opacity(0.1))
+        .background(theme.colors.surfaceSelected)
         .cornerRadius(theme.radius.sm)
     }
 }
@@ -678,7 +678,7 @@ fileprivate struct QuestionnaireView: View {
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, theme.spacing.sm)
                             .padding(.vertical, theme.spacing.xxs)
-                            .background(Color.primary.opacity(0.08))
+                            .background(theme.colors.surfaceHover)
                             .cornerRadius(theme.radius.xs)
 
                         Text(question.question)
@@ -720,7 +720,7 @@ fileprivate struct QuestionnaireView: View {
                                 .foregroundStyle(.tertiary)
                                 .padding(8)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(Color.primary.opacity(0.04))
+                                .background(theme.colors.surfaceSubtle)
                                 .cornerRadius(6)
                                 .padding(.leading, 18)
                         }

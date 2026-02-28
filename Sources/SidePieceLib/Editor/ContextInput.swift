@@ -188,7 +188,7 @@ struct ContextInputView: View {
                                 }
                             }
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(Color(NSColor.windowBackgroundColor))
+                            .foregroundStyle(theme.colors.backgroundPrimary)
                             .frame(width: 28, height: 28)
                             .background(Circle().fill(
                                 store.agentToolbar.selectedAgent.color
@@ -203,7 +203,7 @@ struct ContextInputView: View {
         .padding(theme.spacing.lg)
         .overlay(
             RoundedRectangle(cornerRadius: theme.radius.xl)
-                .stroke(Color(NSColor.quaternaryLabelColor), lineWidth: theme.borderWidth.thin)
+                .stroke(theme.colors.border, lineWidth: theme.borderWidth.thin)
         )
         .overlay {
             if store.isDragOver {
@@ -278,7 +278,7 @@ struct ContextInputView: View {
             ZStack {
                 Circle()
                     .stroke(
-                        .gray.opacity(0.1),
+                        theme.colors.borderSubtle,
                         style: StrokeStyle(lineWidth: theme.borderWidth.thick, lineCap: .round)
                     )
                     .frame(width: 14, height: 14)

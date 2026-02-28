@@ -24,5 +24,10 @@ extension View {
     /// Injects the app theme into the environment for all descendant views.
     public func appTheme(_ theme: AppTheme = .default) -> some View {
         environment(\.theme, theme)
+            .foregroundStyle(
+                theme.colors.textPrimary,
+                theme.colors.textSecondary,
+                theme.colors.textTertiary
+            )
     }
 }

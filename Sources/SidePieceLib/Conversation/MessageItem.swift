@@ -177,7 +177,7 @@ private struct MessageHeaderView: View {
             isStreaming: isStreaming,
             tokenUsage: tokenUsage
         )
-        .background(Color(NSColor.windowBackgroundColor))
+        .background(theme.colors.backgroundPrimary)
         .clipShape(RoundedRectangle(cornerRadius: theme.radius.lg))
     }
 }

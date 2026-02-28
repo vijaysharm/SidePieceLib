@@ -267,7 +267,7 @@ struct ModelSelectionView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: store.isTabBarVisible)
-        .background(Color(NSColor.controlBackgroundColor))
+        .background(theme.colors.backgroundOverlay)
     }
 }
 
@@ -302,7 +302,7 @@ private struct SearchField: View {
         .padding(.vertical, theme.spacing.sm)
         .background(
             RoundedRectangle(cornerRadius: theme.radius.sm)
-                .fill(Color(NSColor.textBackgroundColor).opacity(0.5))
+                .fill(theme.colors.backgroundInput.opacity(0.5))
         )
     }
 }
@@ -311,6 +311,7 @@ private struct SearchField: View {
 
 private struct CategoryTabBar: View {
     @Bindable var store: StoreOf<ModelSelectionFeature>
+    @Environment(\.theme) private var theme
 
     var body: some View {
         VStack(spacing: 0) {
@@ -329,7 +330,7 @@ private struct CategoryTabBar: View {
             }
             Spacer()
         }
-        .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
+        .background(theme.colors.backgroundOverlay.opacity(0.5))
     }
 }
 

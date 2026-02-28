@@ -528,13 +528,13 @@ struct ProjectView: View {
                 // Section header
                 HStack {
                     Text("Projects")
-                        .font(.subheadline)
+                        .font(theme.typography.bodySmall)
                         .fontWeight(.medium)
                         .foregroundStyle(.secondary)
 
                     if let count = store.filterResultCount {
                         Text("(\(count) found)")
-                            .font(.caption)
+                            .font(theme.typography.caption)
                             .foregroundStyle(.tertiary)
                     }
 
@@ -544,7 +544,7 @@ struct ProjectView: View {
                         store.send(.delegate(.selectDirectory))
                     } label: {
                         Image(systemName: "plus")
-                            .font(.system(size: 12))
+                            .font(theme.typography.caption)
                             .foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
@@ -576,6 +576,7 @@ struct ProjectView: View {
                 }
                 .padding()
             }
+            .background(theme.colors.backgroundSecondary)
             .navigationSplitViewColumnWidth(min: 200, ideal: 300, max: 1800)
         } detail: {
             if let selectedID = store.selectedConversationID, let conversationStore = store.scope(
@@ -584,16 +585,20 @@ struct ProjectView: View {
             ) {
                 ConversationView(store: conversationStore)
                     .id(selectedID)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(theme.colors.backgroundPrimary)
             } else {
                 VStack(spacing: theme.spacing.lg) {
                     Image(systemName: "folder.badge.plus")
                         .font(theme.typography.displayIcon)
                         .foregroundStyle(.tertiary)
                     Text("Open a project to get started")
-                        .font(.headline)
+                        .font(theme.typography.body)
+                        .fontWeight(.semibold)
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(theme.colors.backgroundPrimary)
             }
         }
         .onAppear {
@@ -608,13 +613,13 @@ struct ProjectView: View {
                 } label: {
                     HStack(spacing: 8) {
                         Image(systemName: "folder.fill")
-                            .font(.callout)
+                            .font(theme.typography.label)
                         if let activeProject = store.activeProject {
                             Text(activeProject.displayName)
-                                .font(.callout)
+                                .font(theme.typography.label)
                         } else {
                             Text("No Project")
-                                .font(.callout)
+                                .font(theme.typography.label)
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -663,16 +668,16 @@ struct ProjectSectionView: View {
                     } label: {
                         HStack(spacing: 8) {
                             Image(systemName: project.isExpanded ? "chevron.down" : "chevron.right")
-                                .font(.system(size: 10))
+                                .font(theme.typography.captionSmall)
                                 .foregroundStyle(.tertiary)
                                 .frame(width: 12)
 
                             Image(systemName: "folder.fill")
-                                .font(.system(size: 12))
+                                .font(theme.typography.caption)
                                 .foregroundStyle(.secondary)
 
                             Text(project.displayName)
-                                .font(.subheadline)
+                                .font(theme.typography.bodySmall)
                                 .fontWeight(.medium)
                                 .foregroundStyle(.primary)
                                 .lineLimit(1)
@@ -696,7 +701,7 @@ struct ProjectSectionView: View {
                             }
                         } label: {
                             Image(systemName: "ellipsis")
-                                .font(.system(size: 12))
+                                .font(theme.typography.caption)
                                 .foregroundStyle(.secondary)
                                 .padding(.vertical, 6)
                                 .padding(.horizontal, 8)
@@ -815,7 +820,7 @@ struct ConversationRowView: View {
                 .onSubmit { store.send(.commitRename) }
                 .onExitCommand { store.send(.cancelRename) }
                 .onAppear { isRenameFocused = true }
-                .font(.subheadline)
+                .font(theme.typography.bodySmall)
                 .textFieldStyle(.plain)
                 .lineLimit(1)
             } else {
@@ -826,7 +831,7 @@ struct ConversationRowView: View {
                         Text(store.displayTitle)
                     }
                 }
-                .font(.subheadline)
+                .font(theme.typography.bodySmall)
                 .foregroundStyle(isSelected ? theme.colors.textOnSelected : .primary)
                 .lineLimit(1)
                 .truncationMode(.tail)
@@ -852,7 +857,7 @@ struct ConversationRowView: View {
                         }
                     } label: {
                         Image(systemName: "ellipsis")
-                            .font(.system(size: 12))
+                            .font(theme.typography.caption)
                             .foregroundStyle(.secondary)
                             .padding(.vertical, 8)
                             .padding(.horizontal, 10)
@@ -863,7 +868,7 @@ struct ConversationRowView: View {
                     .padding(.trailing, -10)
                 } else {
                     Text("\(store.displayTime)")
-                        .font(.subheadline)
+                        .font(theme.typography.bodySmall)
                         .foregroundStyle(.secondary)
                 }
             }

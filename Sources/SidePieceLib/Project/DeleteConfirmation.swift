@@ -110,7 +110,7 @@ struct DeleteConfirmationView: View {
             }
         }
         .padding(theme.spacing.xxl)
-        .background(Color(NSColor.controlBackgroundColor))
+        .background(theme.colors.backgroundOverlay)
         .clipShape(RoundedRectangle(cornerRadius: theme.radius.lg))
     }
 }
