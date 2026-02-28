@@ -8,6 +8,7 @@ import SwiftUI
 
 struct SettingsSidebarView: View {
     let store: StoreOf<SettingsFeature>
+    @Environment(\.theme) private var theme
 
     var body: some View {
         VStack(spacing: 0) {
@@ -15,7 +16,7 @@ struct SettingsSidebarView: View {
             Button {
                 store.send(.delegate(.dismiss))
             } label: {
-                HStack(spacing: 6) {
+                HStack(spacing: theme.spacing.sm) {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 12, weight: .semibold))
                     Text("Back to app")
@@ -23,13 +24,13 @@ struct SettingsSidebarView: View {
                 }
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+                .padding(.horizontal, theme.spacing.lg)
+                .padding(.vertical, theme.spacing.md)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .padding(.horizontal, 8)
-            .padding(.top, 12)
+            .padding(.horizontal, theme.spacing.md)
+            .padding(.top, theme.spacing.lg)
 
             // Title
             Text("Settings")
@@ -37,12 +38,12 @@ struct SettingsSidebarView: View {
                 .fontWeight(.bold)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 20)
-                .padding(.top, 8)
-                .padding(.bottom, 12)
+                .padding(.top, theme.spacing.md)
+                .padding(.bottom, theme.spacing.lg)
 
             // Category list
             ScrollView {
-                LazyVStack(spacing: 2) {
+                LazyVStack(spacing: theme.spacing.xxs) {
                     ForEach(store.categories) { category in
                         SettingsCategoryRow(
                             category: category,
@@ -53,7 +54,7 @@ struct SettingsSidebarView: View {
                         )
                     }
                 }
-                .padding(.horizontal, 8)
+                .padding(.horizontal, theme.spacing.md)
             }
 
             Spacer()
@@ -65,6 +66,7 @@ struct SettingsCategoryRow: View {
     let category: SettingCategory
     let isSelected: Bool
     let onSelect: () -> Void
+    @Environment(\.theme) private var theme
 
     @State private var isHovered = false
 
@@ -72,25 +74,25 @@ struct SettingsCategoryRow: View {
         Button(action: onSelect) {
             HStack(spacing: 10) {
                 Image(systemName: category.icon)
-                    .font(.system(size: 14))
-                    .foregroundStyle(isSelected ? .white : .secondary)
+                    .font(theme.typography.label)
+                    .foregroundStyle(isSelected ? theme.colors.textOnSelected : .secondary)
                     .frame(width: 20)
 
                 Text(category.title)
                     .font(.subheadline)
-                    .foregroundStyle(isSelected ? .white : .primary)
+                    .foregroundStyle(isSelected ? theme.colors.textOnSelected : .primary)
                     .lineLimit(1)
 
                 Spacer()
             }
             .padding(.horizontal, 10)
-            .padding(.vertical, 8)
+            .padding(.vertical, theme.spacing.md)
             .background(
-                RoundedRectangle(cornerRadius: 6)
+                RoundedRectangle(cornerRadius: theme.radius.sm)
                     .fill(
                         isSelected
-                            ? Color.white.opacity(0.1)
-                            : (isHovered ? Color.white.opacity(0.05) : Color.clear)
+                            ? theme.colors.surfaceSelected
+                            : (isHovered ? theme.colors.surfaceHover : Color.clear)
                     )
             )
             .contentShape(Rectangle())

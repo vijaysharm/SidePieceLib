@@ -140,6 +140,7 @@ struct ContextInputView: View {
     @Bindable var store: StoreOf<ContextInputFeature>
     var isStreaming: Bool = false
     var tokenUsage: TokenUsage
+    @Environment(\.theme) private var theme
 
     var body: some View {
         VStack(spacing: 0) {
@@ -199,10 +200,10 @@ struct ContextInputView: View {
                 .padding(.top, 24)
             }
         }
-        .padding(12)
+        .padding(theme.spacing.lg)
         .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color(NSColor.quaternaryLabelColor), lineWidth: 1)
+            RoundedRectangle(cornerRadius: theme.radius.xl)
+                .stroke(Color(NSColor.quaternaryLabelColor), lineWidth: theme.borderWidth.thin)
         )
         .overlay {
             if store.isDragOver {
@@ -235,20 +236,21 @@ struct ContextInputView: View {
     }
     
     private var dropTargetOverlay: some View {
-        RoundedRectangle(cornerRadius: 14)
-            .fill(Color.accentColor.opacity(0.1))
+        RoundedRectangle(cornerRadius: theme.radius.xl)
+            .fill(theme.colors.accentSubtle)
             .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.accentColor, lineWidth: 2)
+                RoundedRectangle(cornerRadius: theme.radius.xl)
+                    .stroke(theme.colors.accent, lineWidth: theme.borderWidth.medium)
             )
             .overlay {
-                VStack(spacing: 8) {
+                VStack(spacing: theme.spacing.md) {
                     Image(systemName: "arrow.down.doc")
-                        .font(.system(size: 24))
+                        .font(theme.typography.featureIcon)
                     Text("Drop files here")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(theme.typography.bodySmall)
+                        .fontWeight(.medium)
                 }
-                .foregroundStyle(Color.accentColor)
+                .foregroundStyle(theme.colors.accent)
             }
     }
     
@@ -277,14 +279,14 @@ struct ContextInputView: View {
                 Circle()
                     .stroke(
                         .gray.opacity(0.1),
-                        style: StrokeStyle(lineWidth: 2.5, lineCap: .round)
+                        style: StrokeStyle(lineWidth: theme.borderWidth.thick, lineCap: .round)
                     )
                     .frame(width: 14, height: 14)
                 Circle()
                     .trim(from: 0, to: fraction)
                     .stroke(
                         tokenUsageColor(fraction: fraction),
-                        style: StrokeStyle(lineWidth: 2.5, lineCap: .round)
+                        style: StrokeStyle(lineWidth: theme.borderWidth.thick, lineCap: .round)
                     )
                     .rotationEffect(.degrees(-90))
                     .frame(width: 14, height: 14)

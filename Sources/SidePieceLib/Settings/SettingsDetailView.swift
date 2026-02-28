@@ -9,15 +9,16 @@ import SwiftUI
 struct SettingsDetailView: View {
     let category: SettingCategory
     let store: StoreOf<SettingsFeature>
+    @Environment(\.theme) private var theme
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: theme.spacing.xxl) {
                 // Category heading
                 Text(category.title)
                     .font(.title)
                     .fontWeight(.bold)
-                    .padding(.bottom, 4)
+                    .padding(.bottom, theme.spacing.xs)
 
                 // Sections
                 ForEach(category.sections) { section in
@@ -28,7 +29,7 @@ struct SettingsDetailView: View {
                     )
                 }
             }
-            .padding(24)
+            .padding(theme.spacing.xxl)
             .frame(maxWidth: .infinity, alignment: .topLeading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -39,6 +40,7 @@ struct SettingsSectionCard: View {
     let section: SettingSection
     let categoryID: SettingCategory.ID
     let store: StoreOf<SettingsFeature>
+    @Environment(\.theme) private var theme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -47,7 +49,7 @@ struct SettingsSectionCard: View {
                 Text(section.title)
                     .font(.headline)
                     .fontWeight(.semibold)
-                    .padding(.bottom, 8)
+                    .padding(.bottom, theme.spacing.md)
             }
 
             // Items in a grouped card
@@ -59,22 +61,22 @@ struct SettingsSectionCard: View {
                         sectionID: section.id,
                         store: store
                     )
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, theme.spacing.lg)
+                    .padding(.vertical, theme.spacing.md)
 
                     if index < section.items.count - 1 {
                         Divider()
-                            .padding(.horizontal, 12)
+                            .padding(.horizontal, theme.spacing.lg)
                     }
                 }
             }
             .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.white.opacity(0.03))
+                RoundedRectangle(cornerRadius: theme.radius.md)
+                    .fill(theme.colors.surfaceSubtle)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                RoundedRectangle(cornerRadius: theme.radius.md)
+                    .stroke(theme.colors.borderSubtle, lineWidth: theme.borderWidth.thin)
             )
         }
     }

@@ -37,27 +37,29 @@ public struct ErrorBlockFeature: Sendable {
 
 struct ErrorBlockView: View {
     @Bindable var store: StoreOf<ErrorBlockFeature>
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(.red)
-                .font(.system(size: 20))
+    @Environment(\.theme) private var theme
 
-            VStack(alignment: .leading, spacing: 4) {
+    var body: some View {
+        HStack(spacing: theme.spacing.lg) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(theme.colors.statusError)
+                .font(theme.typography.alertIcon)
+
+            VStack(alignment: .leading, spacing: theme.spacing.xs) {
                 Text("Error: \(store.error.code)")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.red)
+                    .font(theme.typography.label)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(theme.colors.statusError)
                     .textSelection(.enabled)
 
                 Text(store.error.message)
-                    .font(.system(size: 13))
+                    .font(theme.typography.bodySmall)
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
 
                 if let underlying = store.error.underlying {
                     Text(underlying)
-                        .font(.system(size: 12, design: .monospaced))
+                        .font(theme.typography.monoSmall)
                         .foregroundStyle(.tertiary)
                         .textSelection(.enabled)
                 }
@@ -65,12 +67,12 @@ struct ErrorBlockView: View {
 
             Spacer()
         }
-        .padding(12)
-        .background(Color.red.opacity(0.1))
-        .cornerRadius(8)
+        .padding(theme.spacing.lg)
+        .background(theme.colors.statusErrorBackground)
+        .cornerRadius(theme.radius.md)
         .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.red.opacity(0.3), lineWidth: 1)
+            RoundedRectangle(cornerRadius: theme.radius.md)
+                .stroke(theme.colors.statusErrorBorder, lineWidth: theme.borderWidth.thin)
         )
     }
 }

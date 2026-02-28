@@ -211,6 +211,7 @@ public struct ModelSelectionFeature: Sendable {
 
 struct ModelSelectionView: View {
     @Bindable var store: StoreOf<ModelSelectionFeature>
+    @Environment(\.theme) private var theme
 
     var body: some View {
         VStack(spacing: 0) {
@@ -251,7 +252,7 @@ struct ModelSelectionView: View {
                     }
                     HStack {
                         Text("Prices are approximate. Refer to provider websites for current pricing.")
-                            .font(.system(size: 8))
+                            .font(theme.typography.legal)
                             .foregroundStyle(.tertiary)
                             .padding(.leading)
                         Spacer()
@@ -274,16 +275,17 @@ struct ModelSelectionView: View {
 
 private struct SearchField: View {
     @Binding var text: String
+    @Environment(\.theme) private var theme
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: theme.spacing.md) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
-                .font(.system(size: 14))
+                .font(theme.typography.label)
 
             TextField("Search models...", text: $text)
                 .textFieldStyle(.plain)
-                .font(.system(size: 13))
+                .font(theme.typography.bodySmall)
 
             if !text.isEmpty {
                 Button {
@@ -297,9 +299,9 @@ private struct SearchField: View {
             }
         }
         .padding(.horizontal, 10)
-        .padding(.vertical, 6)
+        .padding(.vertical, theme.spacing.sm)
         .background(
-            RoundedRectangle(cornerRadius: 6)
+            RoundedRectangle(cornerRadius: theme.radius.sm)
                 .fill(Color(NSColor.textBackgroundColor).opacity(0.5))
         )
     }
@@ -337,6 +339,7 @@ private struct CategoryTabButton: View {
     let category: ModelSelectionFeature.ModelCategory
     let isSelected: Bool
     @Bindable var store: StoreOf<ModelSelectionFeature>
+    @Environment(\.theme) private var theme
 
     @State private var isHovered = false
 
@@ -346,18 +349,18 @@ private struct CategoryTabButton: View {
         } label: {
             ZStack {
                 if isSelected {
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.white.opacity(0.1))
+                    RoundedRectangle(cornerRadius: theme.radius.sm)
+                        .fill(theme.colors.surfaceSelected)
                 } else if isHovered {
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.white.opacity(0.05))
+                    RoundedRectangle(cornerRadius: theme.radius.sm)
+                        .fill(theme.colors.surfaceHover)
                 }
 
                 HStack(spacing: 0) {
                     if isSelected {
                         Rectangle()
-                            .fill(Color.white.opacity(0.6))
-                            .frame(width: 3)
+                            .fill(theme.colors.textOnSelectedSecondary)
+                            .frame(width: theme.borderWidth.indicator)
                             .clipShape(RoundedRectangle(cornerRadius: 1.5))
                     }
 
@@ -366,7 +369,7 @@ private struct CategoryTabButton: View {
                     Group {
                         if case .preferred = category {
                             Image(systemName: "star.fill")
-                                .font(.system(size: 14))
+                                .font(theme.typography.label)
                         } else {
                             Text(category.tabLetter)
                                 .font(.system(size: 14, weight: .semibold, design: .rounded))
@@ -396,6 +399,7 @@ private struct ModelRowView: View {
     let model: ModelSelectionFeature.DisplayModel
     let isSelected: Bool
     @Bindable var store: StoreOf<ModelSelectionFeature>
+    @Environment(\.theme) private var theme
 
     @State private var localHover = false
 
@@ -404,12 +408,13 @@ private struct ModelRowView: View {
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 8) {
+        HStack(alignment: .top, spacing: theme.spacing.md) {
             VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 6) {
+                HStack(spacing: theme.spacing.sm) {
                     Text(model.name)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(isSelected ? .white : .primary)
+                        .font(theme.typography.bodySmall)
+                        .fontWeight(.medium)
+                        .foregroundStyle(isSelected ? theme.colors.textOnSelected : .primary)
                         .lineLimit(1)
                     Spacer()
                     FeatureIconsView(model: model, isHighlighted: isSelected)
@@ -417,35 +422,35 @@ private struct ModelRowView: View {
 
                 HStack {
                     Text(model.descriptionText)
-                        .font(.system(size: 11))
-                        .foregroundStyle(isSelected ? .white.opacity(0.7) : .secondary)
+                        .font(theme.typography.caption)
+                        .foregroundStyle(isSelected ? theme.colors.textOnSelectedSecondary : .secondary)
                         .lineLimit(1)
 
                     if let ctx = model.contextWindowText {
                         Text("·")
-                            .foregroundStyle(isSelected ? Color.white.opacity(0.5) : Color.secondary.opacity(0.5))
+                            .foregroundStyle(isSelected ? theme.colors.textOnSelectedSecondary : Color.secondary.opacity(0.5))
                         Text(ctx)
-                            .font(.system(size: 11))
-                            .foregroundStyle(isSelected ? .white.opacity(0.7) : .secondary)
+                            .font(theme.typography.caption)
+                            .foregroundStyle(isSelected ? theme.colors.textOnSelectedSecondary : .secondary)
                     }
 
                     if let cost = model.costText {
                         Text("·")
-                            .foregroundStyle(isSelected ? Color.white.opacity(0.5) : Color.secondary.opacity(0.5))
+                            .foregroundStyle(isSelected ? theme.colors.textOnSelectedSecondary : Color.secondary.opacity(0.5))
                         Text(cost)
-                            .font(.system(size: 11))
-                            .foregroundStyle(isSelected ? .white.opacity(0.7) : .secondary)
+                            .font(theme.typography.caption)
+                            .foregroundStyle(isSelected ? theme.colors.textOnSelectedSecondary : .secondary)
                     }
 
                     Spacer()
                 }
             }
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, theme.spacing.md)
         .padding(.horizontal, 10)
         .background(
-            RoundedRectangle(cornerRadius: 6)
-                .fill(isSelected ? Color.white.opacity(0.1) : (isHighlighted ? Color.white.opacity(0.05) : Color.clear))
+            RoundedRectangle(cornerRadius: theme.radius.sm)
+                .fill(isSelected ? theme.colors.surfaceSelected : (isHighlighted ? theme.colors.surfaceHover : Color.clear))
         )
         .contentShape(Rectangle())
         .onTapGesture {
@@ -464,6 +469,7 @@ private struct ModelRowView: View {
 private struct FeatureIconsView: View {
     let model: ModelSelectionFeature.DisplayModel
     let isHighlighted: Bool
+    @Environment(\.theme) private var theme
 
     private var hasAnyFeature: Bool {
         model.isFast || model.hasVision || model.hasReasoning ||
@@ -472,31 +478,31 @@ private struct FeatureIconsView: View {
 
     var body: some View {
         if hasAnyFeature {
-            HStack(spacing: 2) {
+            HStack(spacing: theme.spacing.xxs) {
                 if model.isFast {
-                    FeatureIcon(systemName: "bolt.fill", color: .yellow, tooltip: "Fast")
+                    FeatureIcon(systemName: "bolt.fill", color: theme.colors.featureFast, tooltip: "Fast")
                 }
                 if model.hasVision {
-                    FeatureIcon(systemName: "eye", color: .green, tooltip: "Vision")
+                    FeatureIcon(systemName: "eye", color: theme.colors.featureVision, tooltip: "Vision")
                 }
                 if model.hasReasoning {
-                    FeatureIcon(systemName: "brain", color: .purple, tooltip: "Reasoning")
+                    FeatureIcon(systemName: "brain", color: theme.colors.featureReasoning, tooltip: "Reasoning")
                 }
                 if model.hasToolCalling {
-                    FeatureIcon(systemName: "wrench", color: Color(red: 0.9, green: 0.5, blue: 0.5), tooltip: "Tool Calling")
+                    FeatureIcon(systemName: "wrench", color: theme.colors.featureToolCalling, tooltip: "Tool Calling")
                 }
                 if model.hasImageGeneration {
-                    FeatureIcon(systemName: "photo.badge.plus", color: .purple.opacity(0.8), tooltip: "Image Generation")
+                    FeatureIcon(systemName: "photo.badge.plus", color: theme.colors.featureImageGen, tooltip: "Image Generation")
                 }
                 if model.hasPDFSupport {
-                    FeatureIcon(systemName: "doc.text", color: .cyan, tooltip: "PDF Comprehension")
+                    FeatureIcon(systemName: "doc.text", color: theme.colors.featurePDF, tooltip: "PDF Comprehension")
                 }
             }
-            .padding(.horizontal, 6)
-            .padding(.vertical, 4)
+            .padding(.horizontal, theme.spacing.sm)
+            .padding(.vertical, theme.spacing.xs)
             .background(
                 Capsule()
-                    .fill(Color(white: 0.15))
+                    .fill(theme.colors.featureBadgeBackground)
             )
         }
     }
@@ -525,23 +531,25 @@ private struct FeatureIcon: View {
 
 private struct ArchivedSection: View {
     @Bindable var store: StoreOf<ModelSelectionFeature>
+    @Environment(\.theme) private var theme
 
     var body: some View {
         VStack(spacing: 0) {
             Button {
                 store.send(.internal(.toggleArchivedSection))
             } label: {
-                HStack(spacing: 6) {
+                HStack(spacing: theme.spacing.sm) {
                     Image(systemName: store.isArchivedExpanded ? "chevron.down" : "chevron.right")
-                        .font(.system(size: 9, weight: .semibold))
+                        .font(theme.typography.micro)
+                        .fontWeight(.semibold)
                         .foregroundStyle(.tertiary)
 
                     Image(systemName: "archivebox")
-                        .font(.system(size: 11))
+                        .font(theme.typography.caption)
                         .foregroundStyle(.tertiary)
 
                     Text("\(store.archivedModels.count) archived models")
-                        .font(.system(size: 11))
+                        .font(theme.typography.caption)
                         .foregroundStyle(.secondary)
 
                     Spacer()

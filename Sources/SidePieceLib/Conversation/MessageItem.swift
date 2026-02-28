@@ -166,7 +166,8 @@ private struct MessageHeaderView: View {
     @Bindable var store: StoreOf<MessageItemFeature>
     var isStreaming: Bool = false
     var tokenUsage: TokenUsage
-    
+    @Environment(\.theme) private var theme
+
     var body: some View {
         ContextInputView(
             store: store.scope(
@@ -177,6 +178,6 @@ private struct MessageHeaderView: View {
             tokenUsage: tokenUsage
         )
         .background(Color(NSColor.windowBackgroundColor))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: theme.radius.lg))
     }
 }

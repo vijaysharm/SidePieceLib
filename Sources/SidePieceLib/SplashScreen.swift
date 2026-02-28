@@ -176,6 +176,7 @@ public struct SplashScreenFeature: Sendable {
 struct SplashScreenView: View {
     @Bindable var store: StoreOf<SplashScreenFeature>
     @FocusState private var isViewFocused: Bool
+    @Environment(\.theme) private var theme
     
     var body: some View {
         if store.isLoading {
@@ -240,7 +241,7 @@ struct SplashScreenView: View {
                 .fill(.clear)
             VStack() {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 16)
+                    RoundedRectangle(cornerRadius: theme.radius.pill)
                     .frame(width: 128, height: 128)
                     Image(systemName: store.appIcon)
                         .resizable()
@@ -271,13 +272,13 @@ struct SplashScreenView: View {
                 
                 if button.id != store.actionButtons.last?.id {
                     Divider()
-                        .padding(.horizontal, 16)
+                        .padding(.horizontal, theme.spacing.xl)
                 }
             }
         }
         .overlay(
-            RoundedRectangle(cornerRadius: 4)
-                .stroke(Color(white: 0.3), lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: theme.radius.xs)
+                .stroke(theme.colors.separator, lineWidth: theme.borderWidth.hairline)
         )
         .frame(maxWidth: 400)
     }
@@ -302,7 +303,7 @@ struct SplashScreenView: View {
                         }
                     }
                 }
-                .padding(.vertical, 8)
+                .padding(.vertical, theme.spacing.md)
             }
         }
     }
@@ -314,32 +315,34 @@ private struct ActionButtonRow: View {
     let button: ActionButton
     var isSelected: Bool = false
     let action: () -> Void
-    
+    @Environment(\.theme) private var theme
+
     @State private var isHovering = false
-    
+
     private var isHighlighted: Bool {
         isSelected || isHovering
     }
-    
+
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: theme.spacing.lg) {
             Image(systemName: button.icon)
                 .font(.system(size: 16, weight: .regular))
                 .foregroundStyle(.secondary)
-                .frame(width: 24)
-            
+                .frame(width: theme.spacing.xxl)
+
             Text(button.title)
-                .font(.system(size: 14, weight: .medium))
+                .font(theme.typography.label)
+                .fontWeight(.medium)
                 .foregroundStyle(.primary)
-            
+
             Spacer()
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, theme.spacing.xl)
         .padding(.vertical, 14)
         .background(
-            RoundedRectangle(cornerRadius: 4)
-                .fill(isHighlighted ? Color(white: 0.25) : Color.clear)
-                .padding(2)
+            RoundedRectangle(cornerRadius: theme.radius.xs)
+                .fill(isHighlighted ? theme.colors.surfaceSelected : Color.clear)
+                .padding(theme.spacing.xxs)
         )
         .contentShape(Rectangle())
         .onTapGesture {

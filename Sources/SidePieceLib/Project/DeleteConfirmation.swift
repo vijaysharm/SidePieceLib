@@ -64,9 +64,10 @@ public struct DeleteConfirmationFeature: Sendable {
 
 struct DeleteConfirmationView: View {
     let store: StoreOf<DeleteConfirmationFeature>
+    @Environment(\.theme) private var theme
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: theme.spacing.xl) {
             Text(store.title)
                 .font(.headline)
 
@@ -75,18 +76,18 @@ struct DeleteConfirmationView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
-            HStack(spacing: 12) {
+            HStack(spacing: theme.spacing.lg) {
                 Button {
                     store.send(.cancel)
                 } label: {
                     Text("Cancel")
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, theme.spacing.md)
                 }
                 .buttonStyle(.plain)
                 .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: theme.radius.md)
+                        .stroke(theme.colors.border, lineWidth: theme.borderWidth.thin)
                 )
 
                 Button(role: .destructive) {
@@ -99,17 +100,17 @@ struct DeleteConfirmationView: View {
                 } label: {
                     Text(store.confirmButtonTitle)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, theme.spacing.md)
                 }
                 .buttonStyle(.plain)
                 .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.red)
+                    RoundedRectangle(cornerRadius: theme.radius.md)
+                        .fill(theme.colors.statusError)
                 )
             }
         }
-        .padding(24)
+        .padding(theme.spacing.xxl)
         .background(Color(NSColor.controlBackgroundColor))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: theme.radius.lg))
     }
 }

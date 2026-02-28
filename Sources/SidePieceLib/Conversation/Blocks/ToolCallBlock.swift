@@ -309,9 +309,10 @@ public struct ToolCallBlockFeature: Sendable {
 
 struct ToolCallBlockView: View {
     @Bindable var store: StoreOf<ToolCallBlockFeature>
+    @Environment(\.theme) private var theme
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: theme.spacing.md) {
             // Header row with tool name, chevron, and interaction controls
             HStack(spacing: 8) {
                 // Left side: expand button with tool name + chevron
@@ -494,14 +495,14 @@ struct ToolCallBlockView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     if !store.arguments.isEmpty {
                         Text(formatJSON(store.arguments))
-                            .font(.system(size: 12, design: .monospaced))
+                            .font(theme.typography.monoSmall)
                             .foregroundStyle(.tertiary)
                             .textSelection(.enabled)
                     }
 
                     if let result = store.result {
                         Text(formatJSON(result))
-                            .font(.system(size: 12, design: .monospaced))
+                            .font(theme.typography.monoSmall)
                             .foregroundStyle(.tertiary)
                             .textSelection(.enabled)
                     }
@@ -538,13 +539,14 @@ fileprivate struct PermissionControls: View {
     let onDeny: () -> Void
     let onAllow: (ToolInteractionResponse) -> Void
     let onSelectAction: (AllowAction) -> Void
+    @Environment(\.theme) private var theme
 
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: theme.spacing.xl) {
             // Deny - plain text button
             Button(action: onDeny) {
                 Text("Deny")
-                    .font(.system(size: 10))
+                    .font(theme.typography.captionSmall)
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
@@ -561,14 +563,15 @@ fileprivate struct PermissionControls: View {
                     onAllow(.allowOnce)
                 } label: {
                     Text("Allow")
-                        .font(.system(size: 10, weight: .medium))
+                        .font(theme.typography.captionSmall)
+                        .fontWeight(.medium)
                         .foregroundStyle(.primary)
                 }
                 .buttonStyle(.plain)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
+                .padding(.horizontal, theme.spacing.lg)
+                .padding(.vertical, theme.spacing.sm)
                 .background(Color.primary.opacity(0.1))
-                .cornerRadius(6)
+                .cornerRadius(theme.radius.sm)
             }
         }
     }
@@ -578,27 +581,29 @@ fileprivate struct InputControls: View {
     let onCancel: () -> Void
     let onSubmit: () -> Void
     let isSubmitDisabled: Bool
+    @Environment(\.theme) private var theme
 
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: theme.spacing.xl) {
             Button(action: onCancel) {
                 Text("Cancel")
-                    .font(.system(size: 10))
+                    .font(theme.typography.captionSmall)
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
 
             Button(action: onSubmit) {
                 Text("Submit")
-                    .font(.system(size: 10, weight: .medium))
+                    .font(theme.typography.captionSmall)
+                    .fontWeight(.medium)
                     .foregroundStyle(.primary)
             }
             .buttonStyle(.plain)
             .disabled(isSubmitDisabled)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
+            .padding(.horizontal, theme.spacing.lg)
+            .padding(.vertical, theme.spacing.sm)
             .background(Color.primary.opacity(isSubmitDisabled ? 0.05 : 0.1))
-            .cornerRadius(6)
+            .cornerRadius(theme.radius.sm)
         }
     }
 }
@@ -607,6 +612,7 @@ fileprivate struct AllowSplitButton: View {
     let selectedAction: AllowAction
     let onAllow: (ToolInteractionResponse) -> Void
     let onSelectAction: (AllowAction) -> Void
+    @Environment(\.theme) private var theme
 
     var body: some View {
         HStack(spacing: 0) {
@@ -619,7 +625,8 @@ fileprivate struct AllowSplitButton: View {
                 }
             } label: {
                 Text(selectedAction.rawValue)
-                    .font(.system(size: 10, weight: .medium))
+                    .font(theme.typography.captionSmall)
+                    .fontWeight(.medium)
                     .foregroundStyle(.primary)
             }
             .buttonStyle(.plain)
@@ -640,12 +647,12 @@ fileprivate struct AllowSplitButton: View {
                 Text("")
             }
             .menuStyle(.borderlessButton)
-            .frame(width: 16)
+            .frame(width: theme.spacing.xl)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
+        .padding(.horizontal, theme.spacing.lg)
+        .padding(.vertical, theme.spacing.sm)
         .background(Color.primary.opacity(0.1))
-        .cornerRadius(6)
+        .cornerRadius(theme.radius.sm)
     }
 }
 
@@ -657,20 +664,22 @@ fileprivate struct QuestionnaireView: View {
     let onToggleOption: (_ question: String, _ option: String, _ multiSelect: Bool) -> Void
     let onToggleOther: (_ question: String, _ multiSelect: Bool) -> Void
     let onSetOtherText: (_ question: String, _ text: String) -> Void
+    @Environment(\.theme) private var theme
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: theme.spacing.xl) {
             ForEach(questions, id: \.question) { question in
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: theme.spacing.sm) {
                     // Header chip + question text
-                    HStack(spacing: 6) {
+                    HStack(spacing: theme.spacing.sm) {
                         Text(question.header)
-                            .font(.system(size: 9, weight: .medium))
+                            .font(theme.typography.micro)
+                            .fontWeight(.medium)
                             .foregroundStyle(.secondary)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, theme.spacing.sm)
+                            .padding(.vertical, theme.spacing.xxs)
                             .background(Color.primary.opacity(0.08))
-                            .cornerRadius(4)
+                            .cornerRadius(theme.radius.xs)
 
                         Text(question.question)
                             .font(.system(size: 12, weight: .medium))

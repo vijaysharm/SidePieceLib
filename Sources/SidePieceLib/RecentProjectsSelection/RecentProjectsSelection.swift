@@ -175,6 +175,7 @@ public struct RecentProjectsSelectionFeature: Sendable {
 struct RecentProjectsSelectionView: View {
     @Bindable var store: StoreOf<RecentProjectsSelectionFeature>
     @FocusState private var isViewFocused: Bool
+    @Environment(\.theme) private var theme
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -194,7 +195,7 @@ struct RecentProjectsSelectionView: View {
                         }
                     }
                 }
-                .padding(.vertical, 8)
+                .padding(.vertical, theme.spacing.md)
             }
         }
         .focusable()
@@ -241,36 +242,37 @@ struct RecentProjectRow: View {
     var isKeyboardSelected: Bool = false
     let onClick: () -> Void
     let onDoubleClick: () -> Void
-    
+    @Environment(\.theme) private var theme
+
     @State private var isHovering = false
-    
+
     private var isHighlighted: Bool {
         isSelected || isHovering || isKeyboardSelected
     }
-    
+
     var body: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 2) {
+        HStack(spacing: theme.spacing.lg) {
+            VStack(alignment: .leading, spacing: theme.spacing.xxs) {
                 Text(project.displayName)
                     .font(.headline)
-                    .foregroundStyle(isHighlighted ? .white : .primary)
+                    .foregroundStyle(isHighlighted ? theme.colors.textOnSelected : .primary)
                     .lineLimit(1)
-                
+
                 Text(project.pathString)
                     .font(.subheadline)
-                    .foregroundStyle(isHighlighted ? .white.opacity(0.85) : .secondary)
+                    .foregroundStyle(isHighlighted ? theme.colors.textOnSelectedSecondary : .secondary)
                     .lineLimit(1)
                     .truncationMode(.head)
             }
-            
+
             Spacer()
         }
-        .padding(.vertical, 6)
-        .padding(.horizontal, 8)
+        .padding(.vertical, theme.spacing.sm)
+        .padding(.horizontal, theme.spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 4)
-                .fill(isHighlighted ? Color(white: 0.2) : Color.clear)
+            RoundedRectangle(cornerRadius: theme.radius.xs)
+                .fill(isHighlighted ? theme.colors.surfaceSelected : Color.clear)
         )
         .contentShape(Rectangle())
         .onTapGesture {
