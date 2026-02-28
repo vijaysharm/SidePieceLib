@@ -113,6 +113,10 @@ extension ThemeTypography {
         featureIcon: .system(size: 24, design: .monospaced),
         alertIcon: .system(size: 20, design: .monospaced),
 
+        title: .system(size: 28, design: .monospaced),
+        titleSmall: .system(size: 22, design: .monospaced),
+        heading: .system(size: 17, design: .monospaced),
+
         body: .system(size: 15, design: .monospaced),
         bodySmall: .system(size: 13, design: .monospaced),
         label: .system(size: 14, design: .monospaced),

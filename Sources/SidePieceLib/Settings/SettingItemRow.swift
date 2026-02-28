@@ -11,6 +11,7 @@ struct SettingItemRow: View {
     let categoryID: SettingCategory.ID
     let sectionID: SettingSection.ID
     let store: StoreOf<SettingsFeature>
+    @Environment(\.theme) private var theme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -19,10 +20,10 @@ struct SettingItemRow: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(item.title)
-                            .font(.subheadline)
+                            .font(theme.typography.bodySmall)
                         if !item.description.isEmpty {
                             Text(item.description)
-                                .font(.caption)
+                                .font(theme.typography.caption)
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -46,10 +47,10 @@ struct SettingItemRow: View {
             case let .text(placeholder, _):
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item.title)
-                        .font(.subheadline)
+                        .font(theme.typography.bodySmall)
                     if !item.description.isEmpty {
                         Text(item.description)
-                            .font(.caption)
+                            .font(theme.typography.caption)
                             .foregroundStyle(.secondary)
                     }
                     if let value = store.settingItemValues[item.id], case let .string(value) = value {
@@ -62,7 +63,15 @@ struct SettingItemRow: View {
                                 )))
                             }
                         ))
-                        .textFieldStyle(.roundedBorder)
+                        .textFieldStyle(.plain)
+                        .padding(.horizontal, theme.spacing.md)
+                        .padding(.vertical, theme.spacing.sm)
+                        .background(theme.colors.backgroundInput)
+                        .clipShape(RoundedRectangle(cornerRadius: theme.radius.sm))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: theme.radius.sm)
+                                .stroke(theme.colors.borderSubtle, lineWidth: theme.borderWidth.hairline)
+                        )
                     }
                 }
 
@@ -70,10 +79,10 @@ struct SettingItemRow: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(item.title)
-                            .font(.subheadline)
+                            .font(theme.typography.bodySmall)
                         if !item.description.isEmpty {
                             Text(item.description)
-                                .font(.caption)
+                                .font(theme.typography.caption)
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -101,10 +110,10 @@ struct SettingItemRow: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(item.title)
-                            .font(.subheadline)
+                            .font(theme.typography.bodySmall)
                         if !item.description.isEmpty {
                             Text(item.description)
-                                .font(.caption)
+                                .font(theme.typography.caption)
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -121,11 +130,11 @@ struct SettingItemRow: View {
             case let .secureText(placeholder, _):
                 VStack(alignment: .leading, spacing: 6) {
                     Text(item.title)
-                        .font(.subheadline)
+                        .font(theme.typography.bodySmall)
                         .fontWeight(.bold)
                     if !item.description.isEmpty {
                         Text(item.description)
-                            .font(.caption)
+                            .font(theme.typography.caption)
                             .foregroundStyle(.secondary)
                     }
                 
@@ -140,17 +149,25 @@ struct SettingItemRow: View {
                                     )))
                                 }
                             ))
-                            .textFieldStyle(.roundedBorder)
+                            .textFieldStyle(.plain)
+                            .padding(.horizontal, theme.spacing.md)
+                            .padding(.vertical, theme.spacing.sm)
+                            .background(theme.colors.backgroundInput)
+                            .clipShape(RoundedRectangle(cornerRadius: theme.radius.sm))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: theme.radius.sm)
+                                    .stroke(theme.colors.borderSubtle, lineWidth: theme.borderWidth.hairline)
+                            )
                         }
                     }
                 }
             case let .label(title):
                 HStack {
                     Text(item.title)
-                        .font(.subheadline)
+                        .font(theme.typography.bodySmall)
                     Spacer()
                     Text(title)
-                        .font(.subheadline)
+                        .font(theme.typography.bodySmall)
                         .foregroundStyle(.secondary)
                 }
 
@@ -158,9 +175,9 @@ struct SettingItemRow: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(item.title)
-                            .font(.subheadline)
+                            .font(theme.typography.bodySmall)
                         Text(item.description)
-                            .font(.caption)
+                            .font(theme.typography.caption)
                             .foregroundStyle(.secondary)
                     }
                     Spacer()

@@ -18,9 +18,10 @@ struct SettingsSidebarView: View {
             } label: {
                 HStack(spacing: theme.spacing.sm) {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(theme.typography.caption)
+                        .fontWeight(.semibold)
                     Text("Back to app")
-                        .font(.subheadline)
+                        .font(theme.typography.bodySmall)
                 }
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -34,7 +35,7 @@ struct SettingsSidebarView: View {
 
             // Title
             Text("Settings")
-                .font(.title2)
+                .font(theme.typography.titleSmall)
                 .fontWeight(.bold)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 20)
@@ -79,7 +80,7 @@ struct SettingsCategoryRow: View {
                     .frame(width: 20)
 
                 Text(category.title)
-                    .font(.subheadline)
+                    .font(theme.typography.bodySmall)
                     .foregroundStyle(isSelected ? theme.colors.textOnSelected : .primary)
                     .lineLimit(1)
 

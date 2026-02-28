@@ -63,9 +63,9 @@ extension ContextItem {
     }
     public struct ItemData: Sendable, Equatable, Identifiable {
         public let id: UUID
-        let type: ItemDataType
+        public let type: ItemDataType
         let icon: Image
-        let title: String
+        public let title: String
         let subtitle: String?
         let sectionTitle: String?
         let underline: Bool

@@ -76,6 +76,10 @@ extension ThemeTypography {
         featureIcon: .system(size: 24),
         alertIcon: .system(size: 20),
 
+        title: .system(size: 28),
+        titleSmall: .system(size: 22),
+        heading: .system(size: 17),
+
         body: .system(size: 15),
         bodySmall: .system(size: 13),
         label: .system(size: 14),

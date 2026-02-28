@@ -497,6 +497,7 @@ struct ProjectView: View {
                     "Search Agents...",
                     text: $store.searchFilter.sending(\.searchFilterChanged)
                 )
+                .font(theme.typography.bodySmall)
                 .textFieldStyle(.plain)
                 .padding(.horizontal, theme.spacing.lg)
                 .padding(.vertical, theme.spacing.md)
@@ -513,6 +514,7 @@ struct ProjectView: View {
                     store.send(.newAgent)
                 } label: {
                     Text("New Agent")
+                        .font(theme.typography.bodySmall)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
                 }

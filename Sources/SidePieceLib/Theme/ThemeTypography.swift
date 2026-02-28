@@ -13,6 +13,12 @@ public struct ThemeTypography: Sendable {
     let featureIcon: Font   // 24
     let alertIcon: Font     // 20
 
+    // MARK: - Titles
+
+    let title: Font         // 28
+    let titleSmall: Font    // 22
+    let heading: Font       // 17
+
     // MARK: - Body
 
     let body: Font          // 15

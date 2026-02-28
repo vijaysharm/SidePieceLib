@@ -69,10 +69,11 @@ struct DeleteConfirmationView: View {
     var body: some View {
         VStack(spacing: theme.spacing.xl) {
             Text(store.title)
-                .font(.headline)
+                .font(theme.typography.heading)
+                .fontWeight(.semibold)
 
             Text(store.message)
-                .font(.subheadline)
+                .font(theme.typography.bodySmall)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 

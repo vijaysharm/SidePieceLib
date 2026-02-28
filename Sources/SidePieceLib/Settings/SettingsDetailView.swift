@@ -16,7 +16,7 @@ struct SettingsDetailView: View {
             VStack(alignment: .leading, spacing: theme.spacing.xxl) {
                 // Category heading
                 Text(category.title)
-                    .font(.title)
+                    .font(theme.typography.title)
                     .fontWeight(.bold)
                     .padding(.bottom, theme.spacing.xs)
 
@@ -47,7 +47,7 @@ struct SettingsSectionCard: View {
             // Section title
             if !section.title.isEmpty {
                 Text(section.title)
-                    .font(.headline)
+                    .font(theme.typography.heading)
                     .fontWeight(.semibold)
                     .padding(.bottom, theme.spacing.md)
             }

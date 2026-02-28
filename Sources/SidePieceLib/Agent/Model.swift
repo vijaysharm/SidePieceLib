@@ -90,7 +90,9 @@ public struct Model: Equatable, Sendable {
         lhs.id == rhs.id
     }
 
-    var displayName: String {
+    public var modelId: String { id.description }
+
+    public var displayName: String {
         name
     }
     
@@ -137,11 +139,11 @@ public struct Model: Equatable, Sendable {
         return fastIndicators.contains { name.lowercased().contains($0) }
     }
     
-    var providerId: String {
+    public var providerId: String {
         provider.id
     }
-    
-    var providerName: String {
+
+    public var providerName: String {
         provider.name
     }
     
