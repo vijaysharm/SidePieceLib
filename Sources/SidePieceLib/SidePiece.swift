@@ -62,6 +62,6 @@ public struct SidePieceAppView: View {
                 }
             }
         }
-        .appTheme()
+        .appTheme(.solarized)
     }
 }

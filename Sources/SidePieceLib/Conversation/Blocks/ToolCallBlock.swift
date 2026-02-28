@@ -218,7 +218,7 @@ public struct ToolCallBlockFeature: Sendable {
     public struct State: Identifiable, Equatable, Sendable {
         public let id: UUID
         let toolCallId: String
-        var name: String
+        public var name: String
         var arguments: String
         var status: ToolCallStatus
         var result: String?
