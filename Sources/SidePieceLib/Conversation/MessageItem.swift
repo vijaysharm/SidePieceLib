@@ -46,7 +46,7 @@ public struct MessageItemFeature: Sendable {
         
         @CasePathable
         public enum DelegateAction: Equatable {
-            case streamError(String)
+            case streamError(StreamingError)
         }
     }
 
@@ -92,7 +92,7 @@ public struct MessageItemFeature: Sendable {
                             await send(.internal(.llmEvent(event)))
                         }
                     } catch {
-                        await send(.delegate(.streamError("\(error)")))
+                        await send(.delegate(.streamError(StreamingError(from: error))))
                     }
                 }
                 

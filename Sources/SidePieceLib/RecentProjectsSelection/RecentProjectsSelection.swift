@@ -6,6 +6,22 @@
 import ComposableArchitecture
 import SwiftUI
 
+public enum RecentProjectError: LocalizedError, Equatable, Sendable {
+    case bookmarkFailed(code: Int, domain: String, message: String)
+
+    public init(from error: Error) {
+        let nsError = error as NSError
+        self = .bookmarkFailed(code: nsError.code, domain: nsError.domain, message: nsError.localizedDescription)
+    }
+
+    public var errorDescription: String? {
+        switch self {
+        case let .bookmarkFailed(_, _, message):
+            message
+        }
+    }
+}
+
 // MARK: - Reducer
 
 @Reducer
@@ -53,7 +69,7 @@ public struct RecentProjectsSelectionFeature: Sendable {
         @CasePathable
         public enum Delegate: Equatable {
             case openUrl(URL)
-            case error(String)
+            case error(RecentProjectError)
         }
     }
     
@@ -112,7 +128,7 @@ public struct RecentProjectsSelectionFeature: Sendable {
                         let url = try await recentProject.resolve(project)
                         await send(.delegate(.openUrl(url)))
                     } catch {
-                        await send(.delegate(.error("\(error)")))
+                        await send(.delegate(.error(RecentProjectError(from: error))))
                     }
                 }
                 
@@ -131,7 +147,7 @@ public struct RecentProjectsSelectionFeature: Sendable {
                         let resolvedUrl = try await recentProject.resolve(project)
                         await send(.delegate(.openUrl(resolvedUrl)))
                     } catch {
-                        await send(.delegate(.error("\(error)")))
+                        await send(.delegate(.error(RecentProjectError(from: error))))
                     }
                 }
                 

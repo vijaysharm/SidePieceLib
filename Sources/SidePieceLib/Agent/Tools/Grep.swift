@@ -121,8 +121,8 @@ public struct GrepTool: TypedTool {
         if process.terminationStatus == 2 {
             let errData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
             let errMsg = String(data: errData, encoding: .utf8) ?? "Unknown error"
-            throw ToolExecutionError.unknown(
-                "ripgrep error: \(errMsg.trimmingCharacters(in: .whitespacesAndNewlines))"
+            throw ToolExecutionError.executionFailed(
+                message: "ripgrep error: \(errMsg.trimmingCharacters(in: .whitespacesAndNewlines))"
             )
         }
 

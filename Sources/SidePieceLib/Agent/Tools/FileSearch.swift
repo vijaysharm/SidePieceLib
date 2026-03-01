@@ -51,7 +51,7 @@ public struct FileSearchTool: TypedTool {
             includingPropertiesForKeys: [.isRegularFileKey],
             options: [.skipsHiddenFiles]
         ) else {
-            throw ToolExecutionError.unknown("Unable to enumerate project directory: \(projectPath)")
+            throw ToolExecutionError.directoryNotFound(path: projectPath)
         }
 
         var scoredPaths: [(path: String, score: Int)] = []

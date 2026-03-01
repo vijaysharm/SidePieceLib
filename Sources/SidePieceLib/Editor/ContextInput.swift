@@ -32,7 +32,7 @@ public struct ContextInputFeature: Sendable {
             case setDragOver(Bool)
             case filesDropped([URL])
             case filesStored([ManagedFile])
-            case dropError(String)
+            case dropError(FileStorageError)
         }
         
         @CasePathable
@@ -87,8 +87,10 @@ public struct ContextInputFeature: Sendable {
                         do {
                             let file = try await fileStorageClient.addFile(url)
                             storedFiles.append(file)
+                        } catch let error as FileStorageError {
+                            await send(.internal(.dropError(error)))
                         } catch {
-                            await send(.internal(.dropError(error.localizedDescription)))
+                            await send(.internal(.dropError(.sourceFileNotReadable(path: url.path, reason: .init(from: error)))))
                         }
                     }
                     if !storedFiles.isEmpty {

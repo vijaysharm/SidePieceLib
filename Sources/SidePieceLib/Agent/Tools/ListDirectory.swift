@@ -66,7 +66,7 @@ public struct ListDirectoryTool: TypedTool {
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: directoryURL.path, isDirectory: &isDirectory),
               isDirectory.boolValue else {
-            throw ToolExecutionError.unknown("Directory not found: \(directoryURL.path)")
+            throw ToolExecutionError.directoryNotFound(path: directoryURL.path)
         }
 
         let contents = try FileManager.default.contentsOfDirectory(

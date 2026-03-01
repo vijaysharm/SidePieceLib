@@ -6,6 +6,22 @@
 import ComposableArchitecture
 import SwiftUI
 
+public enum LoadingError: LocalizedError, Equatable, Sendable {
+    case network(code: Int, domain: String, message: String)
+
+    public init(from error: Error) {
+        let nsError = error as NSError
+        self = .network(code: nsError.code, domain: nsError.domain, message: nsError.localizedDescription)
+    }
+
+    public var errorDescription: String? {
+        switch self {
+        case let .network(_, _, message):
+            message
+        }
+    }
+}
+
 @Reducer
 public struct LoadingFeature: Sendable {
     @ObservableState
@@ -24,7 +40,7 @@ public struct LoadingFeature: Sendable {
         @CasePathable
         public enum DelegateAction: Equatable {
             case ready(RootFeature.State)
-            case failed(String)
+            case failed(LoadingError)
         }
     }
     
@@ -79,7 +95,7 @@ public struct LoadingFeature: Sendable {
                     )
                     await send(.delegate(.ready(state)))
                 } catch: { error, send in
-                    await send(.delegate(.failed("\(error)")))
+                    await send(.delegate(.failed(LoadingError(from: error))))
                 }
             case .delegate:
                 return .none

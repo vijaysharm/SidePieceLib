@@ -131,7 +131,7 @@ public struct AskUserQuestionTool: TypedTool {
     /// under the "answers" key before decoding, so `input.answers` is populated.
     public func execute(_ input: Input, projectURL: URL) async throws -> Output {
         guard let answers = input.answers else {
-            throw ToolExecutionError.unknown("No answers provided for ask_user_question")
+            throw ToolExecutionError.invalidArguments(message: "No answers provided for ask_user_question")
         }
 
         return Output(answers: answers)

@@ -184,7 +184,7 @@ public enum ToolCallStatus: Equatable, Sendable {
 
     case executing              // Tool is running
     case completed              // Finished successfully
-    case failed(String)         // Execution failed with error message
+    case failed(ToolExecutionError) // Execution failed with typed error
 
     var isActive: Bool {
         switch self {
@@ -201,8 +201,38 @@ public enum ToolCallStatus: Equatable, Sendable {
     }
 }
 
-public enum ToolExecutionError: LocalizedError, Equatable {
-    case unknown(String)
+public enum ToolExecutionError: LocalizedError, Equatable, Sendable {
+    case toolNotFound(name: String)
+    case fileNotFound(path: String)
+    case directoryNotFound(path: String)
+    case invalidArguments(message: String)
+    case executionFailed(message: String)
+    case unknown(message: String)
+
+    public init(from error: Error) {
+        if let toolError = error as? ToolExecutionError {
+            self = toolError
+        } else {
+            self = .unknown(message: error.localizedDescription)
+        }
+    }
+
+    public var errorDescription: String? {
+        switch self {
+        case let .toolNotFound(name):
+            "Unknown tool: \(name)"
+        case let .fileNotFound(path):
+            "File not found: \(path)"
+        case let .directoryNotFound(path):
+            "Directory not found: \(path)"
+        case let .invalidArguments(message):
+            message
+        case let .executionFailed(message):
+            message
+        case let .unknown(message):
+            message
+        }
+    }
 }
 
 public enum AllowAction: String, CaseIterable, Equatable, Sendable {
@@ -890,7 +920,7 @@ fileprivate struct QuestionnaireView: View {
                 toolCallId: "read_file",
                 name: "read_file",
                 arguments: "{\"path\": \"/Users/test/file.txt\"}",
-                status: .failed("cannot access file")
+                status: .failed(.unknown(message: "cannot access file"))
             )) {
                 ToolCallBlockFeature()
             })

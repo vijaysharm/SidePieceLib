@@ -61,7 +61,7 @@ public struct GlobFileSearchTool: TypedTool {
         }
 
         guard FileManager.default.fileExists(atPath: searchURL.path) else {
-            throw ToolExecutionError.unknown("Directory not found: \(searchURL.path)")
+            throw ToolExecutionError.directoryNotFound(path: searchURL.path)
         }
 
         var matchingFiles: [(path: String, modDate: Date)] = []

@@ -179,8 +179,8 @@ extension Tool {
             execute: { arguments, projectURL in
                 @Dependency(\.jsonCoder) var jsonCoder
                 guard let data = arguments.data(using: .utf8) else {
-                    throw ToolExecutionError.unknown(
-                        "Invalid UTF-8 in tool arguments for '\(typedTool.name)'"
+                    throw ToolExecutionError.invalidArguments(
+                        message: "Invalid UTF-8 in tool arguments for '\(typedTool.name)'"
                     )
                 }
                 let input = try jsonCoder.decode(T.Input.self, from: data, decoding: .convertFromSnakeCase)

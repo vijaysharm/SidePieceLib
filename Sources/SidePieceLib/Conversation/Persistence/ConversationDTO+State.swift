@@ -162,10 +162,25 @@ extension ToolCallStatus {
         switch self {
         case .completed: .completed
         case .denied: .denied
-        case let .failed(msg): .failed(msg)
+        case let .failed(error): .failed(error.toDTO())
         // Non-terminal states map to completed (app was closed mid-operation)
         case .streaming, .executing, .awaitingUser, .waitingForPriorTool: .completed
         }
+    }
+}
+
+extension ToolExecutionError {
+    func toDTO() -> ToolExecutionErrorDTO {
+        let type: String
+        switch self {
+        case .toolNotFound: type = "toolNotFound"
+        case .fileNotFound: type = "fileNotFound"
+        case .directoryNotFound: type = "directoryNotFound"
+        case .invalidArguments: type = "invalidArguments"
+        case .executionFailed: type = "executionFailed"
+        case .unknown: type = "unknown"
+        }
+        return ToolExecutionErrorDTO(type: type, message: errorDescription ?? "Tool execution failed")
     }
 }
 
@@ -379,7 +394,20 @@ extension ToolCallStatusDTO {
         switch self {
         case .completed: .completed
         case .denied: .denied
-        case let .failed(msg): .failed(msg)
+        case let .failed(errorDTO): .failed(errorDTO.toToolExecutionError())
+        }
+    }
+}
+
+extension ToolExecutionErrorDTO {
+    func toToolExecutionError() -> ToolExecutionError {
+        switch type {
+        case "toolNotFound": .toolNotFound(name: message)
+        case "fileNotFound": .fileNotFound(path: message)
+        case "directoryNotFound": .directoryNotFound(path: message)
+        case "invalidArguments": .invalidArguments(message: message)
+        case "executionFailed": .executionFailed(message: message)
+        default: .unknown(message: message)
         }
     }
 }

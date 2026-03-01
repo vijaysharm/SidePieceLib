@@ -78,7 +78,7 @@ public struct ReadFileTool: TypedTool {
         }
 
         guard FileManager.default.fileExists(atPath: fileURL.path) else {
-            throw ToolExecutionError.unknown("File not found: \(fileURL.path)")
+            throw ToolExecutionError.fileNotFound(path: fileURL.path)
         }
 
         let data = try Data(contentsOf: fileURL)
@@ -88,7 +88,7 @@ public struct ReadFileTool: TypedTool {
         }
 
         guard let content = String(data: data, encoding: .utf8) else {
-            throw ToolExecutionError.unknown("File is not valid UTF-8 text: \(fileURL.path)")
+            throw ToolExecutionError.executionFailed(message: "File is not valid UTF-8 text: \(fileURL.path)")
         }
 
         let allLines = content.components(separatedBy: "\n")

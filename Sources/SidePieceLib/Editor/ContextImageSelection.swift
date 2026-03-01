@@ -25,7 +25,7 @@ public struct ContextImageSelectionFeature: Sendable {
             case removeImage(ManagedFile)
             case imageSelected([URL])
             case imagesStored([ManagedFile])
-            case storageError(String)
+            case storageError(FileStorageError)
         }
 
         @CasePathable
@@ -54,8 +54,10 @@ public struct ContextImageSelectionFeature: Sendable {
                         do {
                             let file = try await fileStorageClient.addFile(url)
                             storedFiles.append(file)
+                        } catch let error as FileStorageError {
+                            await send(.internal(.storageError(error)))
                         } catch {
-                            await send(.internal(.storageError(error.localizedDescription)))
+                            await send(.internal(.storageError(.sourceFileNotReadable(path: url.path, reason: .init(from: error)))))
                         }
                     }
                     await send(.internal(.imagesStored(storedFiles)))

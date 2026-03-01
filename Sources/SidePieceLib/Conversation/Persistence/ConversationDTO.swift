@@ -165,13 +165,18 @@ struct ToolCallBlockDTO: Codable, Sendable, Equatable {
     var result: String?
 }
 
+struct ToolExecutionErrorDTO: Codable, Sendable, Equatable {
+    let type: String
+    let message: String
+}
+
 enum ToolCallStatusDTO: Codable, Sendable, Equatable {
     case completed
     case denied
-    case failed(String)
+    case failed(ToolExecutionErrorDTO)
 
     private enum CodingKeys: String, CodingKey {
-        case type, message
+        case type, error, message
     }
 
     private enum StatusType: String, Codable {
@@ -185,9 +190,9 @@ enum ToolCallStatusDTO: Codable, Sendable, Equatable {
             try container.encode(StatusType.completed, forKey: .type)
         case .denied:
             try container.encode(StatusType.denied, forKey: .type)
-        case let .failed(msg):
+        case let .failed(errorDTO):
             try container.encode(StatusType.failed, forKey: .type)
-            try container.encode(msg, forKey: .message)
+            try container.encode(errorDTO, forKey: .error)
         }
     }
 
@@ -198,8 +203,14 @@ enum ToolCallStatusDTO: Codable, Sendable, Equatable {
         case .completed: self = .completed
         case .denied: self = .denied
         case .failed:
-            let msg = try container.decode(String.self, forKey: .message)
-            self = .failed(msg)
+            // Try new format first (structured error object)
+            if let errorDTO = try? container.decode(ToolExecutionErrorDTO.self, forKey: .error) {
+                self = .failed(errorDTO)
+            } else {
+                // Fall back to old format (plain string under "message" key)
+                let msg = try container.decode(String.self, forKey: .message)
+                self = .failed(ToolExecutionErrorDTO(type: "unknown", message: msg))
+            }
         }
     }
 }

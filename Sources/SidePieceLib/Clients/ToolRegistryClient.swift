@@ -30,7 +30,7 @@ extension ToolRegistryClient: DependencyKey {
                 guard let tool = registry.withValue({
                     $0[name]
                 }) else {
-                    throw ToolExecutionError.unknown("Unknown tool: \(name)")
+                    throw ToolExecutionError.toolNotFound(name: name)
                 }
 
                 return try await tool.execute(arguments, projectURL)

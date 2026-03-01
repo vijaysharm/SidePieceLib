@@ -228,7 +228,7 @@ public struct MessageItemResponseFeature: Sendable {
                             let result = try await toolRegistryClient.execute(name, arguments, projectURL)
                             await send(.internal(.toolCallComplete(toolCall, .success(result))))
                         } catch {
-                            await send(.internal(.toolCallComplete(toolCall, .failure(.unknown("\(error)")))))
+                            await send(.internal(.toolCallComplete(toolCall, .failure(ToolExecutionError(from: error)))))
                         }
                     }.cancellable(id: CancelID.toolExecution(toolCall.id)))
                 }
@@ -270,11 +270,8 @@ public struct MessageItemResponseFeature: Sendable {
                     data.status = .completed
                     data.result = result
                 case let .failure(error):
-                    switch error {
-                    case let .unknown(error):
-                        data.status = .failed("\(error)")
-                        data.result = error
-                    }
+                    data.status = .failed(error)
+                    data.result = error.errorDescription ?? "Tool execution failed"
                 }
 
                 state.blocks[id: tool.id] = .toolCall(data)
@@ -444,8 +441,8 @@ extension IdentifiedArrayOf where Element == ResponseBlockFeature.State {
                             output: json
                         ))
                     }
-                } else if case .failed(let errorMsg) = data.status {
-                    let errorObject: [String: Any] = ["error": errorMsg]
+                } else if case .failed(let error) = data.status {
+                    let errorObject: [String: Any] = ["error": error.errorDescription ?? "Tool execution failed"]
                     if let jsonData = try? JSONSerialization.data(withJSONObject: errorObject),
                        let json = String(data: jsonData, encoding: .utf8) {
                         items.append(.toolResult(

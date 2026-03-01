@@ -81,6 +81,31 @@ public struct LLMError: Error, Sendable, Equatable {
     }
 }
 
+// MARK: - Streaming Error
+
+public enum StreamingError: LocalizedError, Equatable, Sendable {
+    case llm(LLMError)
+    case network(code: Int, domain: String, message: String)
+
+    public init(from error: Error) {
+        if let llmError = error as? LLMError {
+            self = .llm(llmError)
+        } else {
+            let nsError = error as NSError
+            self = .network(code: nsError.code, domain: nsError.domain, message: nsError.localizedDescription)
+        }
+    }
+
+    public var errorDescription: String? {
+        switch self {
+        case let .llm(error):
+            error.message
+        case let .network(_, _, message):
+            message
+        }
+    }
+}
+
 // MARK: - Stream Events
 
 /// Provider-neutral streaming events for UI and orchestration.
