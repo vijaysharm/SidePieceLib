@@ -192,6 +192,44 @@ struct MyApp: App {
 
 ---
 
+## Roadmap
+
+Items marked as done are already shipped. Everything else is a half-baked idea being considered for future versions.
+
+**Done**
+- [x] Create a library
+- [x] Shift+Tab to cycle agents
+- [x] Tools (READ working)
+- [x] Store conversation to disk
+- [x] Costs in model selection
+- [x] Usage display in text input
+
+**Planned / In Progress**
+- [ ] Foundation Models support
+- [ ] Theme engine
+- [ ] Keyboard shortcut engine
+- [ ] Connect model capabilities to context controls
+- [ ] Multiple models per prompt
+- [ ] Diffs (git diff, available on GitHub)
+- [ ] Better Markdown rendering
+- [ ] Gemini support
+- [ ] Analytics
+- [ ] Window management
+- [ ] Remember last conversation selection
+- [ ] MCP server
+- [ ] Indicator when conversation is complete & unread
+- [ ] Request (prompt) queuing
+- [ ] Model navigation with keyboard
+- [ ] Save preferred/selected model
+- [ ] Git Worktrees
+- [ ] Tests
+- [ ] Store allowable tools
+- [ ] Memory
+- [ ] Todo
+- [ ] Remove "New Agent" button in sidebar, replace with + in folder row
+
+---
+
 ## License
 
 See [LICENSE](LICENSE) for details.
