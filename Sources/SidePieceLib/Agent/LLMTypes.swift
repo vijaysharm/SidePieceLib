@@ -154,7 +154,7 @@ public struct LLMRequestOptions: Sendable, Equatable {
 
 // MARK: - Media Type Detection
 
-public enum MediaTypeDetector {
+public struct MediaTypeDetector {
     public static func detect(from data: Data) -> String? {
         // PNG
         if data.starts(with: [0x89, 0x50, 0x4E, 0x47]) { return "image/png" }
