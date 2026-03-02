@@ -266,7 +266,11 @@ struct ModelSelectionView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: store.isTabBarVisible)
+        #if os(macOS)
         .background(Color(NSColor.controlBackgroundColor))
+        #else
+        .background(Color(.secondarySystemBackground))
+        #endif
     }
 }
 
@@ -300,7 +304,11 @@ private struct SearchField: View {
         .padding(.vertical, 6)
         .background(
             RoundedRectangle(cornerRadius: 6)
+                #if os(macOS)
                 .fill(Color(NSColor.textBackgroundColor).opacity(0.5))
+                #else
+                .fill(Color(.secondarySystemBackground).opacity(0.5))
+                #endif
         )
     }
 }
@@ -327,7 +335,11 @@ private struct CategoryTabBar: View {
             }
             Spacer()
         }
+        #if os(macOS)
         .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
+        #else
+        .background(Color(.secondarySystemBackground).opacity(0.5))
+        #endif
     }
 }
 

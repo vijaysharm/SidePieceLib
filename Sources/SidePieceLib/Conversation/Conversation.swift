@@ -19,7 +19,7 @@ public struct ConversationFeature: Sendable {
             case mainTextView(CGRect, Source)
             case messages(UUID, CGRect, Source)
         }
-        
+
         public var id: UUID = UUID()
         var project: URL
         var mainTextView: ContextInputFeature.State
@@ -29,7 +29,7 @@ public struct ConversationFeature: Sendable {
         var renameText: String? = nil
         var tokenUsage: TokenUsage = .zero
     }
-    
+
     public enum Action: Equatable {
         case onAppear
         case dismissContextMenu
@@ -52,10 +52,10 @@ public struct ConversationFeature: Sendable {
             )
         }
     }
-    
+
     @Dependency(\.date) var date
     @Dependency(\.uuid) var uuid
-    
+
     public var body: some ReducerOf<Self> {
         Scope(state: \.mainTextView, action: \.mainTextView) {
             ContextInputFeature()
@@ -63,7 +63,7 @@ public struct ConversationFeature: Sendable {
         Scope(state: \.contextMenu, action: \.contextMenu) {
             ContextOverlayFeature()
         }
-        
+
         Reduce { state, action in
             switch action {
             case .onAppear:
@@ -131,7 +131,7 @@ public struct ConversationFeature: Sendable {
                                 return .send(.contextMenu(.push(data.items)))
                             case let .item(data):
                                 state.mainTextView.inputField.attach(
-                                    VSInlineAttachment.VSAttachmentModel(data)
+                                    AttachmentModel(data)
                                 )
                                 return .none
                             }
@@ -190,18 +190,18 @@ public struct ConversationFeature: Sendable {
                     case .insertNewLine, .insertTab:
                         guard let messages = state.messages else { return .none }
                         guard let inputField = messages.messageItems[id: id]?.prompt.inputField else { return .none }
-                        
+
                         switch inputField.action {
                         case .none:
                             return editConversation(id: id, &state)
-                            
+
                         case .command, .context:
                             guard let selection = state.contextMenu.selected else { return .none }
                             switch selection {
                             case let .container(data):
                                 return .send(.contextMenu(.push(data.items)))
                             case let .item(data):
-                                state.messages?.messageItems[id: id]?.prompt.inputField.attach(VSInlineAttachment.VSAttachmentModel(data))
+                                state.messages?.messageItems[id: id]?.prompt.inputField.attach(AttachmentModel(data))
                                 return .none
                             }
                         }
@@ -213,7 +213,7 @@ public struct ConversationFeature: Sendable {
                         return .none
                     }
                 }
-            
+
             case let .messages(.messageItems(.element(id, .prompt(.delegate(.submit))))):
                 return editConversation(id: id, &state)
 
@@ -235,25 +235,25 @@ public struct ConversationFeature: Sendable {
                 guard messageId == id else { return .none }
                 state.contextMenuOffset = .messages(id, frame, source)
                 return .none
-                
+
             case let .messages(.messageItems(.element(_, action: .response(.delegate(.streamEnded(usage)))))):
                 guard let usage else { return .none }
                 state.tokenUsage = TokenUsage(
                     promptTokens: state.tokenUsage.promptTokens + usage.promptTokens,
                     completionTokens: state.tokenUsage.completionTokens + usage.completionTokens
                 )
-                
+
                 return .none
 
             case let .contextMenu(.select(selection)):
                 guard let contextMenuOffset = state.contextMenuOffset else { return .none }
                 switch contextMenuOffset {
                 case .mainTextView:
-                    state.mainTextView.inputField.attach(VSInlineAttachment.VSAttachmentModel(selection))
+                    state.mainTextView.inputField.attach(AttachmentModel(selection))
                 case let .messages(id, _, _):
-                    state.messages?.messageItems[id: id]?.prompt.inputField.attach(VSInlineAttachment.VSAttachmentModel(selection))
+                    state.messages?.messageItems[id: id]?.prompt.inputField.attach(AttachmentModel(selection))
                 }
-                
+
                 state.contextMenuOffset = nil
                 return .none
 
@@ -305,17 +305,18 @@ public struct ConversationFeature: Sendable {
             MessagesFeature()
         }
     }
-    
+
     func addConversation(_ state: inout ConversationFeature.State) -> Effect<Action> {
         guard case .none = state.mainTextView.inputField.action else { return .none }
-        guard let attributedString = state.mainTextView.inputField.textContentStorage.textStorage else {
-            return .none
-        }
-        guard attributedString.length > 0 else { return .none }
-        let copiedString = NSAttributedString(
-            attributedString: attributedString
-        )
-        attributedString.setAttributedString(NSAttributedString())
+        guard !state.mainTextView.inputField.text.isEmpty else { return .none }
+
+        let text = state.mainTextView.inputField.text
+        let attachments = state.mainTextView.inputField.attachments
+
+        // Clear input
+        state.mainTextView.inputField.text = ""
+        state.mainTextView.inputField.attachments = []
+
         if state.messages == nil {
             state.messages = MessagesFeature.State(
                 date: date(),
@@ -326,18 +327,19 @@ public struct ConversationFeature: Sendable {
         let prompt = ContextInputFeature.State(
             inputField: TextInputFeature.State(
                 copy: state.mainTextView.inputField,
-                initialString: copiedString
+                text: text,
+                attachments: attachments
             ),
             images: state.mainTextView.images,
             agentToolbar: state.mainTextView.agentToolbar,
             toolbarMode: .expandOnFocus
         )
-        
+
         state.mainTextView.images = ContextImageSelectionFeature.State()
-        
+
         return .send(.messages(.startStreaming(prompt)))
     }
-    
+
     func editConversation(id: UUID, _ state: inout ConversationFeature.State) -> Effect<Action> {
         guard var messages = state.messages else { return .none }
         guard let index = messages.messageItems.index(id: id) else { return .none }
@@ -346,31 +348,32 @@ public struct ConversationFeature: Sendable {
         messages.messageItems.removeSubrange(nextIndex...)
         state.messages = messages
         state.mainTextView.inputField.isFocused = true
-        state.tokenUsage = .zero // TODO: This is not right. We dont track how many tokens each individual message contributed, so we just reset to zero. We can improve this by tracking the usage, but then we have to manage another map
+        state.tokenUsage = .zero
 
         return .send(.messages(.restartStreaming(id)))
     }
 }
 
+// MARK: - State Helpers
+
 private extension TextInputFeature.State {
     init(
         copy: TextInputFeature.State,
-        initialString: NSAttributedString? = nil
+        text: String,
+        attachments: [AttachmentModel]
     ) {
         self.init(
             minHeight: copy.minHeight,
             maxHeight: copy.maxHeight,
-            height: copy.height,
-            font: copy.font,
-            fontForegroundColor: copy.fontForegroundColor,
-            lineSpacing: copy.lineSpacing,
+            height: copy.minHeight,
             placeholder: copy.placeholder,
-            initialString: initialString
+            text: text,
+            attachments: attachments
         )
     }
 }
 
-private extension VSInlineAttachment.VSAttachmentModel {
+private extension AttachmentModel {
     init(_ item: ContextItem.ItemData) {
         self.id = item.id
         switch item.type {
@@ -385,15 +388,13 @@ private extension VSInlineAttachment.VSAttachmentModel {
 // MARK: - Conversation State
 
 extension ConversationFeature.State {
-    /// Represents the display state of a conversation in the sidebar
     enum DisplayState: Equatable {
-        case empty           // No messages, no draft text
-        case draft           // No messages, has draft text
-        case streaming       // Has messages, actively streaming
-        case active          // Has messages, not streaming
+        case empty
+        case draft
+        case streaming
+        case active
     }
 
-    /// The current display state - determines icon and title shown in sidebar
     var displayState: DisplayState {
         if let messages = messages {
             return messages.streamingMessageID != nil ? .streaming : .active
@@ -402,12 +403,8 @@ extension ConversationFeature.State {
         }
     }
 
-    /// Whether the main text view has content (used internally for draft detection)
     private var hasDraftContent: Bool {
-        guard let textStorage = mainTextView.inputField.textContentStorage.textStorage else {
-            return false
-        }
-        return textStorage.length > 0
+        !mainTextView.inputField.text.isEmpty
     }
 
     var isEmpty: Bool {
@@ -427,7 +424,7 @@ extension ConversationFeature.State {
     var isStreaming: Bool {
         displayState == .streaming
     }
-    
+
     var icon: some View {
         if isStreaming {
             return AnyView(ProgressView()
@@ -454,17 +451,14 @@ extension ConversationFeature.State {
             return messages.title.displayTitle
         }
     }
-    
+
     var displayTime: String {
         guard let messages else { return "" }
         return messages.relativeTimestamp
     }
 
     var draftPreview: String {
-        guard let textStorage = mainTextView.inputField.textContentStorage.textStorage else {
-            return ""
-        }
-        let text = textStorage.string
+        let text = mainTextView.inputField.text
         let preview = String(text.prefix(30))
         return preview.isEmpty ? "Untitled" : preview
     }
@@ -571,11 +565,13 @@ struct ConversationView: View {
             }
         }
         .padding()
+        #if os(macOS)
         .onKeyPress(.escape) {
             guard store.contextMenuOffset != nil else { return .ignored }
             store.send(.dismissContextMenu)
             return .handled
         }
+        #endif
         .onAppear {
             store.send(.onAppear)
         }
@@ -593,12 +589,12 @@ struct ConversationView: View {
         if frame.origin.y < size.height {
             return CGSize(
                 width: xOffset,
-                height: frame.origin.y + frame.size.height - 12 // the 12 should really be the height of the toolbar
+                height: frame.origin.y + frame.size.height - 12
             )
         } else {
             return CGSize(
                 width: xOffset,
-                height: frame.origin.y - size.height + 4 // the 4 just makes it feel like part of the input field
+                height: frame.origin.y - size.height + 4
             )
         }
     }

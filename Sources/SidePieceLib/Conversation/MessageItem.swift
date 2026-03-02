@@ -176,7 +176,11 @@ private struct MessageHeaderView: View {
             isStreaming: isStreaming,
             tokenUsage: tokenUsage
         )
+        #if os(macOS)
         .background(Color(NSColor.windowBackgroundColor))
+        #else
+        .background(Color(.systemBackground))
+        #endif
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }

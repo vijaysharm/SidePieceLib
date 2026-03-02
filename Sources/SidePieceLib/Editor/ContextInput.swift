@@ -23,7 +23,7 @@ public struct ContextInputFeature: Sendable {
         var toolbarMode = ToolBarMode.alwaysShow
         var isDragOver: Bool = false
     }
-    
+
     public enum Action: Equatable {
         @CasePathable
         public enum InternalAction: Equatable {
@@ -34,7 +34,7 @@ public struct ContextInputFeature: Sendable {
             case filesStored([ManagedFile])
             case dropError(FileStorageError)
         }
-        
+
         @CasePathable
         public enum DelegateAction: Equatable {
             case frameDidChange(CGRect)
@@ -43,14 +43,14 @@ public struct ContextInputFeature: Sendable {
             case stopStreaming
             case viewImage(URL)
         }
-        
+
         case inputField(TextInputFeature.Action)
         case images(ContextImageSelectionFeature.Action)
         case agentToolbar(ContextAgentToolbarFeature.Action)
         case delegate(DelegateAction)
         case `internal`(InternalAction)
     }
-    
+
     @Dependency(\.fileStorageClient) var fileStorageClient
 
     public var body: some ReducerOf<Self> {
@@ -109,7 +109,7 @@ public struct ContextInputFeature: Sendable {
 
                 for file in nonImages {
                     state.inputField.attach(
-                        VSInlineAttachment.VSAttachmentModel(
+                        AttachmentModel(
                             id: file.id,
                             type: .file(file.url, file.contentType)
                         )
@@ -138,6 +138,26 @@ private extension Store where State == ContextInputFeature.State, Action == Cont
     }
 }
 
+// MARK: - Platform Colors
+
+private var platformBackgroundColor: Color {
+    #if os(macOS)
+    Color(NSColor.windowBackgroundColor)
+    #else
+    Color(.systemBackground)
+    #endif
+}
+
+private var platformSeparatorColor: Color {
+    #if os(macOS)
+    Color(NSColor.quaternaryLabelColor)
+    #else
+    Color(.separator)
+    #endif
+}
+
+// MARK: - View
+
 struct ContextInputView: View {
     @Bindable var store: StoreOf<ContextInputFeature>
     var isStreaming: Bool = false
@@ -152,7 +172,7 @@ struct ContextInputView: View {
                 )
             )
             .padding(.bottom, store.images.files.isEmpty ? 0 : 12)
-            
+
             TextInputViewRepresentable(
                 store: store.scope(
                     state: \.inputField,
@@ -168,9 +188,9 @@ struct ContextInputView: View {
                             action: \.agentToolbar
                         )
                     )
-                    
+
                     Spacer()
-                    
+
                     HStack(spacing: 2) {
                         tokenUsageView()
                         bottomBarIconButton(systemName: "photo", action: .internal(.addImage))
@@ -189,7 +209,7 @@ struct ContextInputView: View {
                                 }
                             }
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(Color(NSColor.windowBackgroundColor))
+                            .foregroundStyle(platformBackgroundColor)
                             .frame(width: 28, height: 28)
                             .background(Circle().fill(
                                 store.agentToolbar.selectedAgent.color
@@ -204,8 +224,9 @@ struct ContextInputView: View {
         .padding(12)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color(NSColor.quaternaryLabelColor), lineWidth: 1)
+                .stroke(platformSeparatorColor, lineWidth: 1)
         )
+        #if os(macOS)
         .overlay {
             if store.isDragOver {
                 dropTargetOverlay
@@ -216,7 +237,7 @@ struct ContextInputView: View {
             isTargeted: $store.isDragOver.sending(\.internal.setDragOver)
         ) { providers in
             guard !providers.isEmpty else { return false }
-            
+
             Task {
                 var urls: [URL] = []
                 for provider in providers {
@@ -229,13 +250,15 @@ struct ContextInputView: View {
             }
             return true
         }
+        #endif
         .onGeometryChange(for: CGRect.self) { geometry in
             geometry.frame(in: .named("conversationView"))
         } action: { newValue in
             store.send(.internal(.frameDidChange(newValue)))
         }
     }
-    
+
+    #if os(macOS)
     private var dropTargetOverlay: some View {
         RoundedRectangle(cornerRadius: 14)
             .fill(Color.accentColor.opacity(0.1))
@@ -253,7 +276,8 @@ struct ContextInputView: View {
                 .foregroundStyle(Color.accentColor)
             }
     }
-    
+    #endif
+
     private func bottomBarIconButton(
         systemName: String,
         action: ContextInputFeature.Action
@@ -269,7 +293,7 @@ struct ContextInputView: View {
         }
         .buttonStyle(.plain)
     }
-    
+
     @ViewBuilder
     private func tokenUsageView() -> some View {
         if let contextWindow = store.agentToolbar.selectedModel.contextWindow, contextWindow > 0 {
@@ -318,6 +342,7 @@ struct ContextInputView: View {
     }
 }
 
+#if os(macOS)
 private extension NSItemProvider {
     func load<T>(type: T.Type) async throws -> T? where T : _ObjectiveCBridgeable & Sendable, T._ObjectiveCType : NSItemProviderReading {
         return try await withCheckedThrowingContinuation { continuation in
@@ -331,3 +356,4 @@ private extension NSItemProvider {
         }
     }
 }
+#endif

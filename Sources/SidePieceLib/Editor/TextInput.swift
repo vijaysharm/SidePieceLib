@@ -3,10 +3,10 @@
 //  SidePiece
 //
 
-#if os(macOS)
-import AppKit
 import ComposableArchitecture
 import SwiftUI
+
+// MARK: - Feature (Platform-agnostic)
 
 @Reducer
 public struct TextInputFeature: Sendable {
@@ -22,103 +22,60 @@ public struct TextInputFeature: Sendable {
         var maxHeight: CGFloat
         var height: CGFloat
         var action: InputAction
-        
-        var font: NSFont
-        var fontForegroundColor: NSColor
-        var lineSpacing: CGFloat
-        var textContainer: NSTextContainer
-        var textLayoutManager: NSTextLayoutManager
-        var textContentStorage: NSTextContentStorage
+
+        var text: String
+        var attachments: [AttachmentModel]
+        var cursorPosition: Int
         var placeholder: String
         var isFocused: Bool
-        var cursorPosition: NSRange
 
         init(
             minHeight: CGFloat,
             maxHeight: CGFloat,
             height: CGFloat,
             action: InputAction = .none,
-            font: NSFont = NSFont.systemFont(ofSize: NSFont.systemFontSize),
-            fontForegroundColor: NSColor = .textColor,
-            lineSpacing: CGFloat = 1.0,
-            textContainer: NSTextContainer = NSTextContainer(),
-            textLayoutManager: NSTextLayoutManager = NSTextLayoutManager(),
-            textContentStorage: NSTextContentStorage = NSTextContentStorage(),
             placeholder: String = "",
-            initialString: NSAttributedString? = nil
+            text: String = "",
+            attachments: [AttachmentModel] = []
         ) {
             self.minHeight = minHeight
             self.maxHeight = maxHeight
             self.height = height
             self.action = action
-            self.font = font
-            self.fontForegroundColor = fontForegroundColor
-            self.lineSpacing = lineSpacing
-            self.textContainer = textContainer
-            self.textLayoutManager = textLayoutManager
-            self.textContentStorage = textContentStorage
+            self.text = text
+            self.attachments = attachments
+            self.cursorPosition = text.count
             self.placeholder = placeholder
             self.isFocused = false
-            self.cursorPosition = NSRange(location: 0, length: 0)
-            self.textContainer.widthTracksTextView = true
-            self.textContainer.heightTracksTextView = false
-            self.textContainer.containerSize = .greatestFiniteHeight
-            self.textLayoutManager.textContainer = self.textContainer
-            self.textContentStorage.addTextLayoutManager(self.textLayoutManager)
-            
-            guard let initialString else { return }
-            
-            let paragraph = NSMutableParagraphStyle()
-            paragraph.lineSpacing = lineSpacing
-
-            let styledString = NSMutableAttributedString(attributedString: initialString)
-            styledString.addAttributes([
-                .font: font,
-                .foregroundColor: fontForegroundColor,
-                .paragraphStyle: paragraph,
-            ], range: NSRange(location: 0, length: styledString.length))
-
-            self.textContentStorage.textStorage?.setAttributedString(styledString)
         }
-        
+
         init(
             maxLines: UInt = 10,
             action: InputAction = .none,
-            font: NSFont = NSFont.systemFont(ofSize: NSFont.systemFontSize),
-            fontForegroundColor: NSColor = .textColor,
-            lineSpacing: CGFloat = 1.0,
-            textContainer: NSTextContainer = NSTextContainer(),
-            textLayoutManager: NSTextLayoutManager = NSTextLayoutManager(),
-            textContentStorage: NSTextContentStorage = NSTextContentStorage(),
+            lineHeight: CGFloat = AppFont.monoSpacedFont(size: 15).lineHeight,
             placeholder: String = "",
-            initialString: NSAttributedString? = nil
+            text: String = "",
+            attachments: [AttachmentModel] = []
         ) {
-            let fontHeight = font.ascender - font.descender + font.leading
-            let height = fontHeight
-            let minHeight = fontHeight
-            let maxHeight = fontHeight * CGFloat(maxLines)
-            
+            let minHeight = lineHeight
+            let maxHeight = lineHeight * CGFloat(maxLines)
+
             self.init(
                 minHeight: minHeight,
                 maxHeight: maxHeight,
-                height: height,
+                height: minHeight,
                 action: action,
-                font: font,
-                fontForegroundColor: fontForegroundColor,
-                lineSpacing: lineSpacing,
-                textContainer: textContainer,
-                textLayoutManager: textLayoutManager,
-                textContentStorage: textContentStorage,
                 placeholder: placeholder,
-                initialString: initialString
+                text: text,
+                attachments: attachments
             )
         }
     }
-    
+
     public enum Action: Equatable {
         case delegate(DelegateAction)
         case `internal`(InternalAction)
-        
+
         @CasePathable
         public enum DelegateAction: Equatable {
             public enum Event: Equatable {
@@ -127,124 +84,42 @@ public struct TextInputFeature: Sendable {
             }
             case event(Event)
         }
-        
+
         @CasePathable
         public enum InternalAction: Equatable {
-            case textViewDidChange(NSRange)
-            case mouseDown(CGPoint, CGPoint, Int)
+            case textDidChange(String, [AttachmentModel], Int, CGFloat)
             case focusDidChange(Bool)
-            case handleCommand(TextViewCommand, Set<TextViewModifier>, NSRange)
+            case handleCommand(TextViewCommand, Set<TextViewModifier>)
             case actionDidChange(InputAction)
         }
     }
-    
+
     public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
-            case let .internal(.textViewDidChange(selectedRange)):
-                guard let attributedString = state.textContentStorage.textStorage else {
-                    return .none
-                }
-
-                // Track cursor position for button-triggered attachments
-                state.cursorPosition = selectedRange
-
-                // Make sure the input field height is clamped
-                let contentHeight = state.textLayoutManager.usageBoundsForTextContainer.height
+            case let .internal(.textDidChange(text, attachments, cursor, contentHeight)):
+                state.text = text
+                state.attachments = attachments
+                state.cursorPosition = cursor
                 state.height = min(max(contentHeight, state.minHeight), state.maxHeight)
 
                 return reduce(into: &state, action: .internal(.actionDidChange(lookForCommand(
-                    from: attributedString,
-                    in: selectedRange
+                    from: text,
+                    attachments: attachments,
+                    at: cursor
                 ))))
 
-            case let .internal(.mouseDown(origin, point, index)):
-                guard let attributedString = state.textContentStorage.textStorage else {
-                    return .none
-                }
-                guard index < attributedString.length else {
-                    return .none
-                }
-                
-                guard index >= 0 else {
-                    return .none
-                }
-
-                var location = index
-                var attachment = attributedString.attribute(
-                    .attachment,
-                    at: location,
-                    effectiveRange: nil
-                ) as? VSInlineAttachment
-                
-                if attachment == nil && index - 1 >= 0 {
-                    location = index - 1
-                    attachment = attributedString.attribute(
-                        .attachment,
-                        at: location,
-                        effectiveRange: nil
-                    ) as? VSInlineAttachment
-                }
-                
-                guard let attachment else {
-                    return .none
-                }
-
-                let range = NSRange(location: location, length: 1)
-                guard let startLocation = state.textContentStorage.location(
-                    state.textContentStorage.documentRange.location,
-                    offsetBy: range.location
-                ) else {
-                    return .none
-                }
-                
-                guard let endLocation = state.textContentStorage.location(startLocation, offsetBy: 1) else {
-                    return .none
-                }
-                
-                guard let textRange = NSTextRange(location: startLocation, end: endLocation) else {
-                    return .none
-                }
-
-                var attachmentRect: CGRect = .zero
-                state.textLayoutManager.enumerateTextSegments(in: textRange, type: .standard, options: []) { _, rect, _, _ in
-                    attachmentRect = rect
-                    return false
-                }
-                
-                // Convert click point to attachment-local coordinates
-                let clickInContainer = CGPoint(x: point.x - origin.x, y: point.y - origin.y)
-
-                // The attachment rect is in flipped coordinates, convert click point
-                let relativePoint = CGPoint(
-                    x: clickInContainer.x - attachmentRect.origin.x,
-                    y: attachmentRect.height - (clickInContainer.y - attachmentRect.origin.y) // Flip Y
-                )
-
-                guard attachment.didTapCloseButton(at: relativePoint) else {
-                    return .none
-                }
-    
-                // Remove the attachment (and any trailing space)
-                let length = min(range.length + 1, attributedString.length - range.location)
-                let removeRange = NSRange(location: range.location, length: length)
-                attributedString.replaceCharacters(in: removeRange, with: "")
-
-                return .none
-                
             case let .internal(.focusDidChange(focused)):
                 state.isFocused = focused
                 return .none
-                
+
             case let .internal(.actionDidChange(action)):
                 state.action = action
                 return .send(.delegate(.event(.action(action))))
-                
-            case let .internal(.handleCommand(command, _, _)):
+
+            case let .internal(.handleCommand(command, _)):
                 return .send(.delegate(.event(.keyboard(command))))
-                
-            case .internal:
-                return .none
+
             case .delegate:
                 return .none
             }
@@ -252,37 +127,35 @@ public struct TextInputFeature: Sendable {
     }
 }
 
+// MARK: - Command Detection
+
 extension TextInputFeature {
-    private func lookForCommand(
-        from attributedString: NSAttributedString,
-        in selectedRange: NSRange
+    fileprivate func lookForCommand(
+        from text: String,
+        attachments: [AttachmentModel],
+        at cursorPosition: Int
     ) -> TextInputFeature.InputAction {
-        let string = attributedString.string
-        guard let swiftSearchRange = Range(NSRange(location: 0, length: selectedRange.location), in: string) else {
+        let clampedCursor = min(cursorPosition, text.count)
+        let searchEnd = text.index(text.startIndex, offsetBy: clampedCursor)
+        let searchRange = text.startIndex..<searchEnd
+
+        guard let foundRange = text.range(
+            of: "[@/][^\\s]*$",
+            options: .regularExpression,
+            range: searchRange
+        ) else {
             return .none
         }
 
-        guard let foundRange = string.range(of: "[@/][^\\s]*$", options: .regularExpression, range: swiftSearchRange) else {
+        // Check for attachment placeholders in the matched range
+        let matchedString = text[foundRange]
+        if matchedString.contains("\u{FFFC}") {
             return .none
         }
 
-        // Check for attachments in the matched range
-        let nsFoundRange = NSRange(foundRange, in: string)
-        var hasAttachment = false
-        attributedString.enumerateAttribute(.attachment, in: nsFoundRange, options: []) { value, _, stop in
-            if value != nil {
-                hasAttachment = true
-                stop.pointee = true
-            }
-        }
-        
-        guard !hasAttachment else {
-            return .none
-        }
-        
-        let matchedString = string[foundRange]
         let query = String(matchedString.dropFirst())
-        
+        let nsFoundRange = NSRange(foundRange, in: text)
+
         if matchedString.hasPrefix("@") {
             return .context(query, nsFoundRange)
         }
@@ -290,152 +163,154 @@ extension TextInputFeature {
 //        else if matchedString.hasPrefix("/") {
 //            return .command(query, nsFoundRange)
 //        }
-        
+
         return .none
     }
 }
 
+// MARK: - State Helpers
+
 extension TextInputFeature.State {
-    mutating func attach(_ model: VSInlineAttachment.VSAttachmentModel) {
-        guard let attributedString = textContentStorage.textStorage else {
-            return
-        }
+    mutating func attach(_ model: AttachmentModel) {
+        let insertionPoint: String.Index
+        let replacementRange: Range<String.Index>
 
-        let cell = VSInlineAttachment(
-            data: model,
-            font: font
-        )
-        let finalString = NSMutableAttributedString(
-            attributedString: NSAttributedString(attachment: cell)
-        )
-        finalString.append(NSAttributedString(string: " "))
-
-        let insertionRange: NSRange = switch action {
+        switch action {
         case .none:
-            // Insert at cursor position (for button-triggered)
-            NSRange(location: cursorPosition.location, length: 0)
-        case let .command(_, nsFoundRange), let .context(_, nsFoundRange):
-            // Replace @query text (for text-triggered)
-            nsFoundRange
+            let pos = min(cursorPosition, text.count)
+            insertionPoint = text.index(text.startIndex, offsetBy: pos)
+            replacementRange = insertionPoint..<insertionPoint
+        case let .command(_, nsRange), let .context(_, nsRange):
+            guard let range = Range(nsRange, in: text) else { return }
+            insertionPoint = range.lowerBound
+            replacementRange = range
         }
 
-        attributedString.replaceCharacters(
-            in: insertionRange,
-            with: finalString
-        )
+        // Count attachments before insertion point to find correct array index
+        let prefix = text[text.startIndex..<insertionPoint]
+        let attachmentIndex = prefix.filter { $0 == "\u{FFFC}" }.count
+
+        // Replace text
+        text.replaceSubrange(replacementRange, with: "\u{FFFC} ")
+
+        // Insert attachment at the right position
+        attachments.insert(model, at: min(attachmentIndex, attachments.count))
+
+        // Update cursor to after the inserted attachment + space
+        let newPos = text.distance(from: text.startIndex, to: insertionPoint) + 2
+        cursorPosition = newPos
     }
-    
-    var content: [ContentPart] {
-        return textContentStorage.textStorage?.content ?? []
-    }
-}
 
-private extension NSAttributedString {
     var content: [ContentPart] {
-        let fullRange = NSRange(location: 0, length: length)
-        var attachmentRanges: [(range: NSRange, attachment: VSInlineAttachment)] = []
-        
-        enumerateAttribute(.attachment, in: fullRange, options: []) { value, range, _ in
-            guard let attachment = value as? VSInlineAttachment else { return }
-            attachmentRanges.append((range, attachment))
-        }
-        
-        // Helper to extract text for a range
-        func textPart(_ fullString: String, from start: Int, to end: Int) -> ContentPart? {
-            guard end > start else { return nil }
-            let range = NSRange(location: start, length: end - start)
-            guard let swiftRange = Range(range, in: fullString) else { return nil }
-            let text = String(fullString[swiftRange])
-            guard !text.isEmpty else { return nil }
-            return .text(text)
-        }
-        
-        let fullString = string
-        var currentIndex = 0
-        var content: [ContentPart] = []
+        var parts: [ContentPart] = []
+        var attachmentIndex = 0
+        var currentText = ""
 
-        for (range, attachment) in attachmentRanges {
-            if let text = textPart(fullString, from: currentIndex, to: range.location) {
-                content.append(text)
-            }
-            if case let .file(url, contentType) = attachment.data.type {
-                if contentType.isImageType {
-                    content.append(.image(FileSource(url: url, contentType: contentType)))
-                } else {
-                    content.append(.file(FileSource(url: url, contentType: contentType)))
+        for char in text {
+            if char == "\u{FFFC}", attachmentIndex < attachments.count {
+                if !currentText.isEmpty {
+                    parts.append(.text(currentText))
+                    currentText = ""
                 }
+                let attachment = attachments[attachmentIndex]
+                switch attachment.type {
+                case let .file(url, contentType):
+                    if contentType.isImageType {
+                        parts.append(.image(FileSource(url: url, contentType: contentType)))
+                    } else {
+                        parts.append(.file(FileSource(url: url, contentType: contentType)))
+                    }
+                case .tool:
+                    break
+                }
+                attachmentIndex += 1
+            } else {
+                currentText.append(char)
             }
-            currentIndex = range.location + range.length
         }
-        
-        if let text = textPart(fullString, from: currentIndex, to: fullString.count) {
-            content.append(text)
+
+        if !currentText.isEmpty {
+            parts.append(.text(currentText))
         }
-        
-        return content
+
+        return parts
     }
 }
 
-private extension Store where State == TextInputFeature.State, Action == TextInputFeature.Action {
-    func handle(
-        command selector: Selector,
-        modifiers: Set<TextViewModifier>,
-        in range: NSRange
+// MARK: - Store Helpers
+
+extension Store where State == TextInputFeature.State, Action == TextInputFeature.Action {
+    func shouldConsumeCommand(
+        _ command: TextViewCommand,
+        modifiers: Set<TextViewModifier>
     ) -> Bool {
-        guard let command = TextViewCommand(selector: selector) else {
-            return false
-        }
-        
-        // TODO: I think this logic should be programmable
         switch state.action {
         case .none:
             switch command {
             case .insertNewLine:
-                if !modifiers.contains(.shift) {
-                    send(.internal(.handleCommand(command, modifiers, range)))
-                    return true
-                }
-                return false
+                return !modifiers.contains(.shift)
             default:
                 return false
             }
         case .context, .command:
-            send(.internal(.handleCommand(command, modifiers, range)))
             return true
         }
     }
 }
 
+// MARK: - macOS View
+
+#if os(macOS)
+import AppKit
+
+private extension Store where State == TextInputFeature.State, Action == TextInputFeature.Action {
+    func handle(
+        command selector: Selector,
+        modifiers: Set<TextViewModifier>
+    ) -> Bool {
+        guard let command = TextViewCommand(selector: selector) else {
+            return false
+        }
+        guard shouldConsumeCommand(command, modifiers: modifiers) else {
+            return false
+        }
+        send(.internal(.handleCommand(command, modifiers)))
+        return true
+    }
+}
+
 class TextInputView: NSScrollView, NSTextViewDelegate {
+    static let inputFont = NSFont.monospacedSystemFont(ofSize: 15, weight: .regular)
+    static let inputFontColor = NSColor.white
+    static let inputLineSpacing: CGFloat = 4
+
     class TextView: NSTextView {
         private let store: StoreOf<TextInputFeature>
-        
-        init(store: StoreOf<TextInputFeature>) {
+
+        init(store: StoreOf<TextInputFeature>, textContainer: NSTextContainer) {
             self.store = store
-            super.init(frame: .zero, textContainer: store.textContainer)
+            super.init(frame: .zero, textContainer: textContainer)
         }
-        
+
         required init?(coder: NSCoder) {
             fatalError("init(coder:) has not been implemented")
         }
-        
+
         override func paste(_ sender: Any?) {
             pasteAsPlainText(sender)
         }
-        
+
         override func mouseDown(with event: NSEvent) {
             let point = convert(event.locationInWindow, from: nil)
             let charIndex = characterIndexForInsertion(at: point)
-            let origin = textContainerOrigin
-            
-            store.send(.internal(.mouseDown(origin, point, charIndex)))
+
+            handleAttachmentClose(at: point, charIndex: charIndex)
             super.mouseDown(with: event)
         }
 
         override func updateTrackingAreas() {
             super.updateTrackingAreas()
-            
-            // Add tracking area for mouse moved events
+
             for area in trackingAreas {
                 removeTrackingArea(area)
             }
@@ -447,13 +322,13 @@ class TextInputView: NSScrollView, NSTextViewDelegate {
             )
             addTrackingArea(trackingArea)
         }
-        
+
         override func becomeFirstResponder() -> Bool {
             let result = super.becomeFirstResponder()
             if result { store.send(.internal(.focusDidChange(true))) }
             return result
         }
-        
+
         override func resignFirstResponder() -> Bool {
             let result = super.resignFirstResponder()
             if result { store.send(.internal(.focusDidChange(false))) }
@@ -466,17 +341,91 @@ class TextInputView: NSScrollView, NSTextViewDelegate {
                 window.makeFirstResponder(self)
             }
         }
+
+        private func handleAttachmentClose(at point: CGPoint, charIndex: Int) {
+            guard let attributedString = textContentStorage?.textStorage else { return }
+            guard charIndex >= 0, charIndex < attributedString.length else { return }
+
+            var location = charIndex
+            var attachment = attributedString.attribute(
+                .attachment,
+                at: location,
+                effectiveRange: nil
+            ) as? VSInlineAttachment
+
+            if attachment == nil, charIndex - 1 >= 0 {
+                location = charIndex - 1
+                attachment = attributedString.attribute(
+                    .attachment,
+                    at: location,
+                    effectiveRange: nil
+                ) as? VSInlineAttachment
+            }
+
+            guard let attachment else { return }
+
+            let range = NSRange(location: location, length: 1)
+            guard let tlm = textLayoutManager,
+                  let tcs = textContentStorage,
+                  let startLocation = tcs.location(
+                      tcs.documentRange.location,
+                      offsetBy: range.location
+                  ),
+                  let endLocation = tcs.location(startLocation, offsetBy: 1),
+                  let textRange = NSTextRange(location: startLocation, end: endLocation)
+            else { return }
+
+            var attachmentRect: CGRect = .zero
+            tlm.enumerateTextSegments(in: textRange, type: .standard, options: []) { _, rect, _, _ in
+                attachmentRect = rect
+                return false
+            }
+
+            let origin = textContainerOrigin
+            let clickInContainer = CGPoint(x: point.x - origin.x, y: point.y - origin.y)
+            let relativePoint = CGPoint(
+                x: clickInContainer.x - attachmentRect.origin.x,
+                y: attachmentRect.height - (clickInContainer.y - attachmentRect.origin.y)
+            )
+
+            guard attachment.didTapCloseButton(at: relativePoint) else { return }
+
+            let length = min(range.length + 1, attributedString.length - range.location)
+            let removeRange = NSRange(location: range.location, length: length)
+            attributedString.replaceCharacters(in: removeRange, with: "")
+        }
     }
-    
+
     @Bindable var store: StoreOf<TextInputFeature>
     let textView: TextView
-    
+    private let textContentStorage: NSTextContentStorage
+    private let textLayoutManager: NSTextLayoutManager
+    private var isUpdatingFromState = false
+
     init(store: StoreOf<TextInputFeature>) {
         self.store = store
-        textView = TextView(store: store)
+
+        let textContainer = NSTextContainer()
+        textContainer.widthTracksTextView = true
+        textContainer.heightTracksTextView = false
+        textContainer.containerSize = .greatestFiniteHeight
+
+        let layoutManager = NSTextLayoutManager()
+        layoutManager.textContainer = textContainer
+
+        let contentStorage = NSTextContentStorage()
+        contentStorage.addTextLayoutManager(layoutManager)
+
+        self.textContentStorage = contentStorage
+        self.textLayoutManager = layoutManager
+        textView = TextView(store: store, textContainer: textContainer)
 
         super.init(frame: .zero)
-        
+
+        let font = Self.inputFont
+        let fontColor = Self.inputFontColor
+        let lineSpacing = Self.inputLineSpacing
+
         textView.delegate = self
         textView.allowsUndo = true
         textView.isRichText = false
@@ -491,12 +440,12 @@ class TextInputView: NSScrollView, NSTextViewDelegate {
         textView.autoresizingMask = [.width]
         textView.maxSize = .greatestFiniteSize
         textView.minSize = .zero
-        textView.insertionPointColor = store.fontForegroundColor
+        textView.insertionPointColor = fontColor
         let paragraph = NSMutableParagraphStyle()
-        paragraph.lineSpacing = store.lineSpacing
+        paragraph.lineSpacing = lineSpacing
         textView.typingAttributes = [
-            .font: store.font,
-            .foregroundColor: store.fontForegroundColor,
+            .font: font,
+            .foregroundColor: fontColor,
             .paragraphStyle: paragraph,
         ]
         textView.setValue(
@@ -504,79 +453,123 @@ class TextInputView: NSScrollView, NSTextViewDelegate {
                 string: store.placeholder,
                 attributes: [
                     .foregroundColor: NSColor.secondaryLabelColor,
-                    .font: store.font
+                    .font: font
                 ]
             ),
             forKey: "placeholderAttributedString"
         )
-        
+
         backgroundColor = .clear
         drawsBackground = false
         hasVerticalScroller = true
         hasHorizontalScroller = false
         autohidesScrollers = true
         documentView = textView
-        
+
         NotificationCenter.default.addObserver(forName: NSTextView.willSwitchToNSLayoutManagerNotification, object: nil, queue: .main, using: { _ in
             fatalError("willSwitchToNSLayoutManagerNotification")
         })
-        
+
         NotificationCenter.default.addObserver(forName: NSTextView.didSwitchToNSLayoutManagerNotification, object: nil, queue: .main, using: { _ in
             fatalError("didSwitchToNSLayoutManagerNotification")
         })
+
+        // Initialize with existing state content
+        if !store.text.isEmpty {
+            rebuildContent(text: store.text, attachments: store.attachments)
+        }
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
-    func textViewDidChangeSelection(_ notification: Notification) {
-        let range = textView.selectedRange()
-        store.send(.internal(.textViewDidChange(range)))
+
+    // MARK: - State <-> View Sync
+
+    func rebuildContent(text: String, attachments: [AttachmentModel]) {
+        guard let textStorage = textContentStorage.textStorage else { return }
+
+        let font = Self.inputFont
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.lineSpacing = Self.inputLineSpacing
+
+        let defaultAttrs: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: Self.inputFontColor,
+            .paragraphStyle: paragraph,
+        ]
+
+        let attrString = NSMutableAttributedString(string: text, attributes: defaultAttrs)
+
+        // Replace placeholder characters with actual attachment objects
+        var attachmentIndex = 0
+        let nsString = attrString.string as NSString
+        for i in 0..<nsString.length {
+            if nsString.character(at: i) == 0xFFFC, attachmentIndex < attachments.count {
+                let model = attachments[attachmentIndex]
+                let cell = VSInlineAttachment(data: model, font: font)
+                attrString.addAttribute(
+                    .attachment, value: cell,
+                    range: NSRange(location: i, length: 1)
+                )
+                attachmentIndex += 1
+            }
+        }
+
+        isUpdatingFromState = true
+        textStorage.setAttributedString(attrString)
+        isUpdatingFromState = false
     }
-    
+
+    private func extractCurrentAttachments() -> [AttachmentModel] {
+        guard let textStorage = textContentStorage.textStorage else { return [] }
+        var attachments: [AttachmentModel] = []
+        let fullRange = NSRange(location: 0, length: textStorage.length)
+        textStorage.enumerateAttribute(.attachment, in: fullRange, options: []) { value, _, _ in
+            guard let attachment = value as? VSInlineAttachment else { return }
+            attachments.append(attachment.data)
+        }
+        return attachments
+    }
+
+    // MARK: - NSTextViewDelegate
+
+    func textViewDidChangeSelection(_ notification: Notification) {
+        guard !isUpdatingFromState else { return }
+
+        let text = textView.string
+        let cursor = textView.selectedRange().location
+        let contentHeight = textLayoutManager.usageBoundsForTextContainer.height
+        let attachments = extractCurrentAttachments()
+
+        store.send(.internal(.textDidChange(text, attachments, cursor, contentHeight)))
+    }
+
     func textView(
         _ textView: NSTextView,
         doCommandBy selector: Selector
     ) -> Bool {
         store.handle(
             command: selector,
-            modifiers: modifiers,
-            in: textView.selectedRange()
+            modifiers: modifiers
         )
     }
-    
+
     private var modifiers: Set<TextViewModifier> {
         guard let event = NSApp.currentEvent else { return [] }
-        
+
         let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-        
+
         var map = Set<TextViewModifier>()
-        if modifiers.contains(.capsLock) {
-            map.insert(.capsLock)
-        }
-        if modifiers.contains(.shift) {
-            map.insert(.shift)
-        }
-        if modifiers.contains(.control) {
-            map.insert(.control)
-        }
-        if modifiers.contains(.option) {
-            map.insert(.option)
-        }
-        if modifiers.contains(.command) {
-            map.insert(.command)
-        }
-        if modifiers.contains(.numericPad) {
-            map.insert(.numericPad)
-        }
-        if modifiers.contains(.help) {
-            map.insert(.help)
-        }
-        if modifiers.contains(.function) {
-            map.insert(.function)
-        }
-        
+        if modifiers.contains(.capsLock) { map.insert(.capsLock) }
+        if modifiers.contains(.shift) { map.insert(.shift) }
+        if modifiers.contains(.control) { map.insert(.control) }
+        if modifiers.contains(.option) { map.insert(.option) }
+        if modifiers.contains(.command) { map.insert(.command) }
+        if modifiers.contains(.numericPad) { map.insert(.numericPad) }
+        if modifiers.contains(.help) { map.insert(.help) }
+        if modifiers.contains(.function) { map.insert(.function) }
+
         return map
     }
 }
@@ -584,21 +577,25 @@ class TextInputView: NSScrollView, NSTextViewDelegate {
 @MainActor
 struct TextInputViewRepresentable: NSViewRepresentable {
     @Bindable var store: StoreOf<TextInputFeature>
-    
+
     func makeNSView(context: Context) -> TextInputView {
         return TextInputView(store: store)
     }
-    
+
     func updateNSView(
         _ nsView: TextInputView,
         context: Context
     ) {
-        nsView.textView.insertionPointColor = store.fontForegroundColor
+        let font = TextInputView.inputFont
+        let fontColor = TextInputView.inputFontColor
+        let lineSpacing = TextInputView.inputLineSpacing
+
+        nsView.textView.insertionPointColor = fontColor
         let paragraph = NSMutableParagraphStyle()
-        paragraph.lineSpacing = store.lineSpacing
+        paragraph.lineSpacing = lineSpacing
         nsView.textView.typingAttributes = [
-            .font: store.font,
-            .foregroundColor: store.fontForegroundColor,
+            .font: font,
+            .foregroundColor: fontColor,
             .paragraphStyle: paragraph,
         ]
         nsView.textView.setValue(
@@ -606,11 +603,16 @@ struct TextInputViewRepresentable: NSViewRepresentable {
                 string: store.placeholder,
                 attributes: [
                     .foregroundColor: NSColor.secondaryLabelColor,
-                    .font: store.font
+                    .font: font
                 ]
             ),
             forKey: "placeholderAttributedString"
         )
+
+        // Sync state → view when text changed externally (e.g. attach() or clear)
+        if nsView.textView.string != store.text {
+            nsView.rebuildContent(text: store.text, attachments: store.attachments)
+        }
 
         if store.isFocused,
            let window = nsView.textView.window,
@@ -627,7 +629,7 @@ extension NSSize {
             height: CGFloat.greatestFiniteMagnitude
         )
     }
-    
+
     static var greatestFiniteHeight: Self {
         NSSize(
             width: 0,
@@ -635,5 +637,106 @@ extension NSSize {
         )
     }
 }
+#endif
 
+// MARK: - iOS View
+
+#if os(iOS)
+import UIKit
+
+@MainActor
+struct TextInputViewRepresentable: UIViewRepresentable {
+    @Bindable var store: StoreOf<TextInputFeature>
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(store: store)
+    }
+
+    func makeUIView(context: Context) -> UITextView {
+        let textView = UITextView()
+        textView.delegate = context.coordinator
+        textView.font = UIFont.monospacedSystemFont(ofSize: 15, weight: .regular)
+        textView.textColor = .white
+        textView.backgroundColor = .clear
+        textView.isScrollEnabled = true
+        textView.textContainerInset = .zero
+        textView.textContainer.lineFragmentPadding = 0
+        textView.autocorrectionType = .no
+        textView.autocapitalizationType = .none
+        textView.smartDashesType = .no
+        textView.smartQuotesType = .no
+
+        if !store.text.isEmpty {
+            textView.text = store.text
+        }
+
+        return textView
+    }
+
+    func updateUIView(_ uiView: UITextView, context: Context) {
+        context.coordinator.isUpdatingFromState = true
+        defer { context.coordinator.isUpdatingFromState = false }
+
+        if uiView.text != store.text {
+            uiView.text = store.text
+        }
+
+        if store.isFocused, !uiView.isFirstResponder {
+            uiView.becomeFirstResponder()
+        }
+    }
+
+    class Coordinator: NSObject, UITextViewDelegate {
+        let store: StoreOf<TextInputFeature>
+        var isUpdatingFromState = false
+
+        init(store: StoreOf<TextInputFeature>) {
+            self.store = store
+        }
+
+        func textViewDidChange(_ textView: UITextView) {
+            guard !isUpdatingFromState else { return }
+
+            let text = textView.text ?? ""
+            let cursor = textView.selectedRange.location
+            let contentHeight = textView.contentSize.height
+
+            store.send(.internal(.textDidChange(text, [], cursor, contentHeight)))
+        }
+
+        func textViewDidChangeSelection(_ textView: UITextView) {
+            guard !isUpdatingFromState else { return }
+
+            let text = textView.text ?? ""
+            let cursor = textView.selectedRange.location
+            let contentHeight = textView.contentSize.height
+
+            store.send(.internal(.textDidChange(text, [], cursor, contentHeight)))
+        }
+
+        func textViewDidBeginEditing(_ textView: UITextView) {
+            store.send(.internal(.focusDidChange(true)))
+        }
+
+        func textViewDidEndEditing(_ textView: UITextView) {
+            store.send(.internal(.focusDidChange(false)))
+        }
+
+        func textView(
+            _ textView: UITextView,
+            shouldChangeTextIn range: NSRange,
+            replacementText text: String
+        ) -> Bool {
+            // Detect Return key (without shift) for submit
+            if text == "\n" {
+                let command = TextViewCommand.insertNewLine
+                if store.shouldConsumeCommand(command, modifiers: []) {
+                    store.send(.internal(.handleCommand(command, [])))
+                    return false
+                }
+            }
+            return true
+        }
+    }
+}
 #endif

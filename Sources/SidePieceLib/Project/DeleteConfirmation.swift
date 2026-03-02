@@ -109,7 +109,11 @@ struct DeleteConfirmationView: View {
             }
         }
         .padding(24)
+        #if os(macOS)
         .background(Color(NSColor.controlBackgroundColor))
+        #else
+        .background(Color(.secondarySystemBackground))
+        #endif
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }

@@ -3,8 +3,7 @@
 //  SidePiece
 //
 
-#if os(macOS)
-import AppKit
+import Foundation
 
 public enum TextViewCommand: Equatable {
     case cancel
@@ -12,7 +11,12 @@ public enum TextViewCommand: Equatable {
     case insertTab
     case moveDown
     case moveUp
-    
+}
+
+#if os(macOS)
+import AppKit
+
+extension TextViewCommand {
     public init?(selector: Selector) {
         switch selector {
         case #selector(NSResponder.insertNewline(_:)):

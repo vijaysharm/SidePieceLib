@@ -3,7 +3,6 @@
 //  SidePiece
 //
 
-import AppKit
 import ComposableArchitecture
 import Foundation
 import SwiftUI
@@ -25,8 +24,8 @@ extension ConversationFeature.State {
 
         // Save draft if there's text but no messages
         if messages == nil {
-            let draftText = mainTextView.inputField.textContentStorage.textStorage?.string ?? ""
-            let attachments = extractAttachments(from: mainTextView.inputField)
+            let draftText = mainTextView.inputField.text
+            let attachments = mainTextView.inputField.attachments.map { $0.toDTO() }
             let imageFiles = mainTextView.images.files.map { $0.toDTO() }
 
             if !draftText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -120,8 +119,8 @@ extension ContextInputFeature.State {
     func toPromptDTO() -> PromptDTO {
         PromptDTO(
             id: id,
-            text: inputField.textContentStorage.textStorage?.string ?? "",
-            attachments: extractAttachments(from: inputField),
+            text: inputField.text,
+            attachments: inputField.attachments.map { $0.toDTO() },
             imageFiles: images.files.map { $0.toDTO() },
             agentId: agentToolbar.selectedAgent.name,
             modelId: agentToolbar.selectedModel.id.description
@@ -224,6 +223,23 @@ extension ManagedFile {
     }
 }
 
+extension AttachmentModel {
+    func toDTO() -> AttachmentDTO {
+        switch type {
+        case let .file(url, contentType):
+            AttachmentDTO(
+                id: id,
+                type: .file(url: url.absoluteString, contentType: contentType.identifier)
+            )
+        case let .tool(name, _):
+            AttachmentDTO(
+                id: id,
+                type: .tool(name: name)
+            )
+        }
+    }
+}
+
 // MARK: - DTO -> State
 
 extension ConversationDTO {
@@ -231,30 +247,20 @@ extension ConversationDTO {
         let model = rehydrateModel(id: draft?.modelId ?? messages?.modelId ?? "", from: models)
         let agent = rehydrateAgent(name: draft?.agentId ?? messages?.messageItems.first?.prompt.agentId ?? "", from: agents)
 
-        var inputField = TextInputFeature.State(
-            maxLines: 3,
-            font: .monospacedSystemFont(ofSize: 15, weight: .regular),
-            fontForegroundColor: .white,
-            lineSpacing: 4,
-            placeholder: "'@' for context menu"
-        )
+        var draftText = ""
+        var draftAttachments: [AttachmentModel] = []
 
-        // If there's a draft, populate the input field
         if let draftDTO = draft {
-            let initialString = buildAttributedString(
-                text: draftDTO.text,
-                attachments: draftDTO.attachments,
-                font: .monospacedSystemFont(ofSize: 15, weight: .regular)
-            )
-            inputField = TextInputFeature.State(
-                maxLines: 3,
-                font: .monospacedSystemFont(ofSize: 15, weight: .regular),
-                fontForegroundColor: .white,
-                lineSpacing: 4,
-                placeholder: "'@' for context menu",
-                initialString: initialString
-            )
+            draftText = draftDTO.text
+            draftAttachments = draftDTO.attachments.map { $0.toAttachmentModel() }
         }
+
+        let inputField = TextInputFeature.State(
+            maxLines: 3,
+            placeholder: "'@' for context menu",
+            text: draftText,
+            attachments: draftAttachments
+        )
 
         var agentToolbar = ContextAgentToolbarFeature.State(models: models, agents: agents)
         agentToolbar.selectedModel = model
@@ -324,21 +330,14 @@ extension PromptDTO {
     func toState(models: Models, agents: Agents) -> ContextInputFeature.State {
         let model = rehydrateModel(id: modelId, from: models)
         let agent = rehydrateAgent(name: self.agentId, from: agents)
-        let font = NSFont.monospacedSystemFont(ofSize: 15, weight: .regular)
 
-        let initialString = buildAttributedString(
-            text: text,
-            attachments: attachments,
-            font: font
-        )
+        let attachments = self.attachments.map { $0.toAttachmentModel() }
 
         let inputField = TextInputFeature.State(
             maxLines: 3,
-            font: font,
-            fontForegroundColor: .white,
-            lineSpacing: 4,
             placeholder: "'@' for context menu",
-            initialString: initialString
+            text: text,
+            attachments: attachments
         )
 
         var agentToolbar = ContextAgentToolbarFeature.State(models: models, agents: agents)
@@ -461,6 +460,25 @@ extension ManagedFileDTO {
     }
 }
 
+extension AttachmentDTO {
+    func toAttachmentModel() -> AttachmentModel {
+        switch type {
+        case let .file(urlString, contentTypeId):
+            let url = URL(fileURLWithPath: urlString)
+            let contentType = UTType(contentTypeId) ?? .data
+            return AttachmentModel(
+                id: id,
+                type: .file(url, contentType)
+            )
+        case let .tool(name):
+            return AttachmentModel(
+                id: id,
+                type: .tool(name, Image(systemName: "hammer"))
+            )
+        }
+    }
+}
+
 // MARK: - Helpers
 
 private func rehydrateModel(id: String, from models: Models) -> Model {
@@ -469,83 +487,4 @@ private func rehydrateModel(id: String, from models: Models) -> Model {
 
 private func rehydrateAgent(name: String, from agents: Agents) -> Agent {
     agents.agents.first { $0.name == name } ?? agents.default
-}
-
-private func buildAttributedString(
-    text: String,
-    attachments: [AttachmentDTO],
-    font: NSFont
-) -> NSAttributedString {
-    let defaultAttributes: [NSAttributedString.Key: Any] = [
-        .font: font,
-        .foregroundColor: NSColor.white,
-    ]
-    let mutableString = NSMutableAttributedString(
-        string: text,
-        attributes: defaultAttributes
-    )
-
-    guard !attachments.isEmpty else { return mutableString }
-
-    let nsString = mutableString.string as NSString
-    var attachmentIndex = 0
-
-    for i in 0..<nsString.length {
-        guard attachmentIndex < attachments.count else { break }
-        if nsString.character(at: i) == 0xFFFC {
-            let dto = attachments[attachmentIndex]
-            let model = dto.toAttachmentModel()
-            let cell = VSInlineAttachment(data: model, font: font)
-            mutableString.addAttribute(
-                .attachment, value: cell,
-                range: NSRange(location: i, length: 1)
-            )
-            attachmentIndex += 1
-        }
-    }
-
-    return mutableString
-}
-
-extension AttachmentDTO {
-    func toAttachmentModel() -> VSInlineAttachment.VSAttachmentModel {
-        switch type {
-        case let .file(urlString, contentTypeId):
-            let url = URL(fileURLWithPath: urlString)
-            let contentType = UTType(contentTypeId) ?? .data
-            return VSInlineAttachment.VSAttachmentModel(
-                id: id,
-                type: .file(url, contentType)
-            )
-        case let .tool(name):
-            return VSInlineAttachment.VSAttachmentModel(
-                id: id,
-                type: .tool(name, Image(systemName: "hammer"))
-            )
-        }
-    }
-}
-
-private func extractAttachments(from inputField: TextInputFeature.State) -> [AttachmentDTO] {
-    guard let attributedString = inputField.textContentStorage.textStorage else { return [] }
-    var attachments: [AttachmentDTO] = []
-    let fullRange = NSRange(location: 0, length: attributedString.length)
-    attributedString.enumerateAttribute(.attachment, in: fullRange, options: []) { value, _, _ in
-        guard let attachment = value as? VSInlineAttachment else { return }
-        let dto: AttachmentDTO
-        switch attachment.data.type {
-        case let .file(url, contentType):
-            dto = AttachmentDTO(
-                id: attachment.data.id,
-                type: .file(url: url.absoluteString, contentType: contentType.identifier)
-            )
-        case let .tool(name, _):
-            dto = AttachmentDTO(
-                id: attachment.data.id,
-                type: .tool(name: name)
-            )
-        }
-        attachments.append(dto)
-    }
-    return attachments
 }
