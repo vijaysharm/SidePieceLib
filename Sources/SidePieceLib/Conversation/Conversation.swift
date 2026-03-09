@@ -518,6 +518,7 @@ extension ConversationFeature.State {
 
 struct ConversationView: View {
     @Bindable var store: StoreOf<ConversationFeature>
+    @Environment(\.theme) private var theme
 
     var body: some View {
         VStack(spacing: 0) {
@@ -545,7 +546,7 @@ struct ConversationView: View {
             )
             Spacer()
             Text("AI can make mistakes. Please double-check cited sources.")
-                .font(.system(size: 8))
+                .font(theme.typography.legal)
                 .foregroundStyle(.tertiary)
         }
         .coordinateSpace(name: "conversationView")
@@ -571,6 +572,7 @@ struct ConversationView: View {
             }
         }
         .padding()
+        .background(theme.colors.backgroundPrimary)
         .onKeyPress(.escape) {
             guard store.contextMenuOffset != nil else { return .ignored }
             store.send(.dismissContextMenu)

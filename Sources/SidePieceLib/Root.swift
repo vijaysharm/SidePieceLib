@@ -185,6 +185,7 @@ extension RootFeature.Destination.Action: Equatable {}
 
 struct RootView: View {
     @Bindable var store: StoreOf<RootFeature>
+    @Environment(\.theme) private var theme
 
     var body: some View {
         Group {
@@ -216,7 +217,7 @@ struct RootView: View {
                 action: \.destination.modelSelection
             ) {
                 ZStack {
-                    Color.black.opacity(0.85)
+                    theme.colors.scrim
                         .contentShape(Rectangle())
                         .onTapGesture {
                             store.send(.dismissModelSelection)
@@ -224,7 +225,7 @@ struct RootView: View {
                         .transition(.opacity)
                     ModelSelectionView(store: modelStore)
                         .frame(width: 450, height: 400)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: theme.radius.lg))
                         .transition(.opacity.combined(with: .offset(y: -8)))
                 }
                 .ignoresSafeArea()
@@ -243,7 +244,7 @@ struct RootView: View {
                 action: \.destination.deleteConfirmation
             ) {
                 ZStack {
-                    Color.black.opacity(0.85)
+                    theme.colors.scrim
                         .contentShape(Rectangle())
                         .onTapGesture {
                             store.send(.destination(.presented(.deleteConfirmation(.cancel))))

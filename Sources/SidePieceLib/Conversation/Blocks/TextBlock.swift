@@ -39,13 +39,14 @@ public struct TextBlockFeature: Sendable {
 
 struct TextBlockView: View {
     @Bindable var store: StoreOf<TextBlockFeature>
-    
+    @Environment(\.theme) private var theme
+
     var body: some View {
         HStack(alignment: .lastTextBaseline, spacing: 0) {
             StructuredText(markdown: store.content)
                 .textSelection(.enabled)
                 .multilineTextAlignment(.leading)
-                .font(.system(size: 15, weight: .regular))
+                .font(theme.typography.body)
                 .foregroundStyle(.primary)
                 .lineSpacing(4)
 

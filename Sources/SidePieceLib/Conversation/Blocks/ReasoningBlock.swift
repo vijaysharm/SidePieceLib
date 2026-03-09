@@ -44,10 +44,11 @@ public struct ReasoningBlockFeature: Sendable {
 
 struct ReasoningBlockView: View {
     @Bindable var store: StoreOf<ReasoningBlockFeature>
-    
+    @Environment(\.theme) private var theme
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: theme.spacing.md) {
+            HStack(spacing: theme.spacing.md) {
                 Button {
                     store.send(.internal(.toggleExpanded), animation: .easeInOut(duration: 0.2))
                 } label: {
@@ -73,9 +74,9 @@ struct ReasoningBlockView: View {
 
             if store.isExpanded {
                 Text(store.content)
-                    .font(.system(size: 13))
+                    .font(theme.typography.bodySmall)
                     .foregroundStyle(.secondary)
-                    .padding(.leading, 24)
+                    .padding(.leading, theme.spacing.xxl)
                     .textSelection(.enabled)
                     .transition(.opacity)
             }

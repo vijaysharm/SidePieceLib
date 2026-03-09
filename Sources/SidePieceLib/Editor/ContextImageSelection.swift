@@ -117,6 +117,7 @@ private struct ContextImageThumbnailView: View {
     let url: URL
 
     @State private var isHovered = false
+    @Environment(\.theme) private var theme
 
     var body: some View {
         Button {
@@ -127,7 +128,7 @@ private struct ContextImageThumbnailView: View {
                     .resizable()
                     .aspectRatio(contentMode: .fill)
             } placeholder: {
-                Color.gray.opacity(0.3)
+                theme.colors.border
             }
             .frame(width: 48, height: 48)
             .clipShape(RoundedRectangle(cornerRadius: 8))

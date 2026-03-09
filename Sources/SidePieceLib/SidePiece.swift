@@ -50,14 +50,16 @@ public struct SidePieceAppView: View {
     }
     
     public var body: some View {
-        switch store.state {
-        case .loading:
-            if let store = store.scope(state: \.loading, action: \.loading) {
-                LoadingView(store: store)
-            }
-        case .root:
-            if let store = store.scope(state: \.root, action: \.root) {
-                RootView(store: store)
+        Group {
+            switch store.state {
+            case .loading:
+                if let store = store.scope(state: \.loading, action: \.loading) {
+                    LoadingView(store: store)
+                }
+            case .root:
+                if let store = store.scope(state: \.root, action: \.root) {
+                    RootView(store: store)
+                }
             }
         }
     }

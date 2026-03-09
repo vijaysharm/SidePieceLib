@@ -151,6 +151,7 @@ extension MessagesFeature.State {
 
 struct MessagesView: View {
     @Bindable var store: StoreOf<MessagesFeature>
+    @Environment(\.theme) private var theme
     var isStreaming: Bool = false
     var tokenUsage: TokenUsage
 
@@ -170,7 +171,8 @@ struct MessagesView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .font(.system(size: 13, weight: .medium))
+            .font(theme.typography.bodySmall)
+            .fontWeight(.medium)
             .padding(.bottom)
             .padding(.horizontal, 8)
 
@@ -190,6 +192,7 @@ struct MessagesView: View {
                 }
             }
             .listStyle(.plain)
+            .scrollContentBackground(.hidden)
         }
     }
 }

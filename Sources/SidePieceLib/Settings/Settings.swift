@@ -107,24 +107,30 @@ public struct SettingsFeature: Sendable {
 
 struct SettingsView: View {
     @Bindable var store: StoreOf<SettingsFeature>
+    @Environment(\.theme) private var theme
 
     var body: some View {
         NavigationSplitView {
             SettingsSidebarView(store: store)
+                .background(theme.colors.backgroundSecondary)
                 .navigationSplitViewColumnWidth(min: 200, ideal: 240, max: 300)
         } detail: {
             if let category = store.selectedCategory {
                 SettingsDetailView(category: category, store: store)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(theme.colors.backgroundPrimary)
             } else {
                 VStack(spacing: 12) {
                     Image(systemName: "gear")
-                        .font(.system(size: 36))
+                        .font(theme.typography.displayIcon)
                         .foregroundStyle(.tertiary)
                     Text("Select a category")
-                        .font(.headline)
+                        .font(theme.typography.body)
+                        .fontWeight(.semibold)
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(theme.colors.backgroundPrimary)
             }
         }
         .frame(minWidth: 660)

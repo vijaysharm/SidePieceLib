@@ -29,10 +29,11 @@ public struct ImageOverlayFeature: Sendable {
 
 struct ImageOverlayView: View {
     let store: StoreOf<ImageOverlayFeature>
+    @Environment(\.theme) private var theme
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.85)
+            theme.colors.scrim
                 .contentShape(Rectangle())
                 .onTapGesture {
                     store.send(.dismiss)
@@ -47,7 +48,7 @@ struct ImageOverlayView: View {
                 ProgressView()
                     .controlSize(.large)
             }
-            .padding(40)
+            .padding(theme.spacing.xxxl)
             .allowsHitTesting(false)
             .transition(.opacity.combined(with: .offset(y: -8)))
 
@@ -58,16 +59,17 @@ struct ImageOverlayView: View {
                         store.send(.dismiss)
                     } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(theme.typography.label)
+                            .fontWeight(.semibold)
                             .foregroundStyle(.white)
                             .frame(width: 28, height: 28)
                             .background(
                                 Circle()
-                                    .fill(Color.white.opacity(0.15))
+                                    .fill(theme.colors.border)
                             )
                     }
                     .buttonStyle(.plain)
-                    .padding(16)
+                    .padding(theme.spacing.xl)
                 }
                 Spacer()
             }

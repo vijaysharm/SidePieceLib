@@ -72,7 +72,8 @@ public struct ContextAgentToolbarFeature: Sendable {
 
 struct ContextAgentToolbarView: View {
     @Bindable var store: StoreOf<ContextAgentToolbarFeature>
-    
+    @Environment(\.theme) private var theme
+
     var body: some View {
         // Left side - Mode and Model selectors
         HStack(spacing: 8) {
@@ -91,51 +92,53 @@ struct ContextAgentToolbarView: View {
                         }
                     }
                 } label: {
-                    HStack(spacing: 4) {
+                    HStack(spacing: theme.spacing.xs) {
                         store.selectedAgent.icon
                             .font(.system(size: 12))
                         Text(store.selectedAgent.name)
                             .lineLimit(1)
                             .truncationMode(.middle)
-                            .font(.system(size: 13, weight: .medium))
+                            .font(theme.typography.bodySmall)
+                            .fontWeight(.medium)
                         Image(systemName: "chevron.down")
                             .font(.system(size: 9, weight: .semibold))
                     }
                     .foregroundStyle(store.selectedAgent.color)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, theme.spacing.lg)
+                    .padding(.vertical, theme.spacing.xs)
                     .background(
-                        RoundedRectangle(cornerRadius: 16)
+                        RoundedRectangle(cornerRadius: theme.radius.pill)
                             .fill(store.selectedAgent.color.opacity(0.15))
                     )
                 }
                 .buttonStyle(.plain)
             } else {
-                HStack(spacing: 4) {
+                HStack(spacing: theme.spacing.xs) {
                     store.selectedAgent.icon
                         .font(.system(size: 12))
                     Text(store.selectedAgent.name)
                         .lineLimit(1)
                         .truncationMode(.middle)
-                        .font(.system(size: 13, weight: .medium))
+                        .font(theme.typography.bodySmall)
+                        .fontWeight(.medium)
                 }
                 .foregroundStyle(store.selectedAgent.color)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 4)
+                .padding(.horizontal, theme.spacing.lg)
+                .padding(.vertical, theme.spacing.xs)
                 .background(
-                    RoundedRectangle(cornerRadius: 16)
+                    RoundedRectangle(cornerRadius: theme.radius.pill)
                         .fill(store.selectedAgent.color.opacity(0.15))
                 )
             }
 
-            HStack(spacing: 4) {
+            HStack(spacing: theme.spacing.xs) {
                 Button {
                     store.send(.delegate(.selectNewModel(store.selectedModel)))
                 } label: {
                     Text(store.selectedModel.displayName)
                         .lineLimit(1)
                         .truncationMode(.tail)
-                        .font(.system(size: 13))
+                        .font(theme.typography.bodySmall)
                     if store.availableModels.count > 1 {
                         Image(systemName: "chevron.down")
                             .font(.system(size: 9, weight: .semibold))

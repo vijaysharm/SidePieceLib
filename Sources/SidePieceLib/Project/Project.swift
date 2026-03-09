@@ -485,6 +485,7 @@ public struct ProjectFeature: Sendable {
 
 struct ProjectView: View {
     @Bindable var store: StoreOf<ProjectFeature>
+    @Environment(\.theme) private var theme
 
     var body: some View {
         NavigationSplitView(
@@ -496,44 +497,46 @@ struct ProjectView: View {
                     "Search Agents...",
                     text: $store.searchFilter.sending(\.searchFilterChanged)
                 )
+                .font(theme.typography.bodySmall)
                 .textFieldStyle(.plain)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+                .padding(.horizontal, theme.spacing.lg)
+                .padding(.vertical, theme.spacing.md)
                 .background(
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: theme.radius.sm)
+                        .stroke(theme.colors.border, lineWidth: theme.borderWidth.thin)
                 )
                 .disabled(!store.hasProjects)
-                .padding(.horizontal, 12)
-                .padding(.top, 12)
+                .padding(.horizontal, theme.spacing.lg)
+                .padding(.top, theme.spacing.lg)
 
                 // New Agent button
                 Button {
                     store.send(.newAgent)
                 } label: {
                     Text("New Agent")
+                        .font(theme.typography.bodySmall)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
                 }
                 .buttonStyle(.plain)
                 .background(
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: theme.radius.sm)
+                        .stroke(theme.colors.border, lineWidth: theme.borderWidth.thin)
                 )
                 .disabled(!store.hasProjects)
-                .padding(.horizontal, 12)
-                .padding(.top, 8)
+                .padding(.horizontal, theme.spacing.lg)
+                .padding(.top, theme.spacing.md)
 
                 // Section header
                 HStack {
                     Text("Projects")
-                        .font(.subheadline)
+                        .font(theme.typography.bodySmall)
                         .fontWeight(.medium)
                         .foregroundStyle(.secondary)
 
                     if let count = store.filterResultCount {
                         Text("(\(count) found)")
-                            .font(.caption)
+                            .font(theme.typography.caption)
                             .foregroundStyle(.tertiary)
                     }
 
@@ -543,18 +546,18 @@ struct ProjectView: View {
                         store.send(.delegate(.selectDirectory))
                     } label: {
                         Image(systemName: "plus")
-                            .font(.system(size: 12))
+                            .font(theme.typography.caption)
                             .foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
                 }
-                .padding(.horizontal, 12)
-                .padding(.top, 16)
-                .padding(.bottom, 8)
+                .padding(.horizontal, theme.spacing.lg)
+                .padding(.top, theme.spacing.xl)
+                .padding(.bottom, theme.spacing.md)
 
                 // Projects tree
                 ScrollView {
-                    LazyVStack(spacing: 2) {
+                    LazyVStack(spacing: theme.spacing.xxs) {
                         ForEach(store.projectItems) { project in
                             ProjectSectionView(
                                 store: store,
@@ -562,7 +565,7 @@ struct ProjectView: View {
                             )
                         }
                     }
-                    .padding(.horizontal, 8)
+                    .padding(.horizontal, theme.spacing.md)
                 }
                 HStack {
                     Button {
@@ -575,6 +578,7 @@ struct ProjectView: View {
                 }
                 .padding()
             }
+            .background(theme.colors.backgroundSecondary)
             .navigationSplitViewColumnWidth(min: 200, ideal: 300, max: 1800)
         } detail: {
             if let selectedID = store.selectedConversationID, let conversationStore = store.scope(
@@ -583,16 +587,20 @@ struct ProjectView: View {
             ) {
                 ConversationView(store: conversationStore)
                     .id(selectedID)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(theme.colors.backgroundPrimary)
             } else {
-                VStack(spacing: 12) {
+                VStack(spacing: theme.spacing.lg) {
                     Image(systemName: "folder.badge.plus")
-                        .font(.system(size: 36))
+                        .font(theme.typography.displayIcon)
                         .foregroundStyle(.tertiary)
                     Text("Open a project to get started")
-                        .font(.headline)
+                        .font(theme.typography.body)
+                        .fontWeight(.semibold)
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(theme.colors.backgroundPrimary)
             }
         }
         .onAppear {
@@ -607,13 +615,13 @@ struct ProjectView: View {
                 } label: {
                     HStack(spacing: 8) {
                         Image(systemName: "folder.fill")
-                            .font(.callout)
+                            .font(theme.typography.label)
                         if let activeProject = store.activeProject {
                             Text(activeProject.displayName)
-                                .font(.callout)
+                                .font(theme.typography.label)
                         } else {
                             Text("No Project")
-                                .font(.callout)
+                                .font(theme.typography.label)
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -644,6 +652,7 @@ struct ProjectView: View {
 struct ProjectSectionView: View {
     let store: StoreOf<ProjectFeature>
     let projectID: ProjectItemFeature.State.ID
+    @Environment(\.theme) private var theme
 
     private var isProjectHovered: Bool {
         store.hoveringProjectID == projectID
@@ -661,16 +670,16 @@ struct ProjectSectionView: View {
                     } label: {
                         HStack(spacing: 8) {
                             Image(systemName: project.isExpanded ? "chevron.down" : "chevron.right")
-                                .font(.system(size: 10))
+                                .font(theme.typography.captionSmall)
                                 .foregroundStyle(.tertiary)
                                 .frame(width: 12)
 
                             Image(systemName: "folder.fill")
-                                .font(.system(size: 12))
+                                .font(theme.typography.caption)
                                 .foregroundStyle(.secondary)
 
                             Text(project.displayName)
-                                .font(.subheadline)
+                                .font(theme.typography.bodySmall)
                                 .fontWeight(.medium)
                                 .foregroundStyle(.primary)
                                 .lineLimit(1)
@@ -694,7 +703,7 @@ struct ProjectSectionView: View {
                             }
                         } label: {
                             Image(systemName: "ellipsis")
-                                .font(.system(size: 12))
+                                .font(theme.typography.caption)
                                 .foregroundStyle(.secondary)
                                 .padding(.vertical, 6)
                                 .padding(.horizontal, 8)
@@ -705,11 +714,11 @@ struct ProjectSectionView: View {
                         .buttonStyle(.plain)
                     }
                 }
-                .padding(.horizontal, 6)
-                .padding(.vertical, 6)
+                .padding(.horizontal, theme.spacing.sm)
+                .padding(.vertical, theme.spacing.sm)
                 .background(
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(isProjectHovered ? Color.white.opacity(0.05) : Color.clear)
+                    RoundedRectangle(cornerRadius: theme.radius.xs)
+                        .fill(isProjectHovered ? theme.colors.surfaceHover : Color.clear)
                 )
                 .onHover { hovering in
                     withAnimation(.easeInOut(duration: 0.04)) {
@@ -760,14 +769,14 @@ struct ProjectSectionView: View {
                         Button {
                             store.send(.loadMoreConversations(projectID))
                         } label: {
-                            HStack(spacing: 6) {
+                            HStack(spacing: theme.spacing.sm) {
                                 Image(systemName: "arrow.down.circle")
-                                    .font(.system(size: 11))
+                                    .font(theme.typography.caption)
                                 Text("Load more")
-                                    .font(.system(size: 12))
+                                    .font(theme.typography.monoSmall)
                             }
                             .foregroundStyle(.secondary)
-                            .padding(.vertical, 4)
+                            .padding(.vertical, theme.spacing.xs)
                         }
                         .buttonStyle(.plain)
                         .padding(.leading, 20)
@@ -787,6 +796,7 @@ struct ConversationRowView: View {
     let onSelect: () -> Void
     let onHover: (Bool) -> Void
     var onDelete: (() -> Void)? = nil
+    @Environment(\.theme) private var theme
 
     @FocusState private var isRenameFocused: Bool
 
@@ -798,8 +808,9 @@ struct ConversationRowView: View {
         let rowContent = HStack(spacing: 10) {
             store.icon
                 .frame(width: 14, height: 14)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(isSelected ? .white : .secondary)
+                .font(theme.typography.label)
+                .fontWeight(.medium)
+                .foregroundStyle(isSelected ? theme.colors.textOnSelected : .secondary)
 
             // Title - inline rename or display
             if let renameText = store.renameText {
@@ -811,7 +822,7 @@ struct ConversationRowView: View {
                 .onSubmit { store.send(.commitRename) }
                 .onExitCommand { store.send(.cancelRename) }
                 .onAppear { isRenameFocused = true }
-                .font(.subheadline)
+                .font(theme.typography.bodySmall)
                 .textFieldStyle(.plain)
                 .lineLimit(1)
             } else {
@@ -822,8 +833,8 @@ struct ConversationRowView: View {
                         Text(store.displayTitle)
                     }
                 }
-                .font(.subheadline)
-                .foregroundStyle(isSelected ? .white : .primary)
+                .font(theme.typography.bodySmall)
+                .foregroundStyle(isSelected ? theme.colors.textOnSelected : .primary)
                 .lineLimit(1)
                 .truncationMode(.tail)
             }
@@ -848,7 +859,7 @@ struct ConversationRowView: View {
                         }
                     } label: {
                         Image(systemName: "ellipsis")
-                            .font(.system(size: 12))
+                            .font(theme.typography.caption)
                             .foregroundStyle(.secondary)
                             .padding(.vertical, 8)
                             .padding(.horizontal, 10)
@@ -859,16 +870,16 @@ struct ConversationRowView: View {
                     .padding(.trailing, -10)
                 } else {
                     Text("\(store.displayTime)")
-                        .font(.subheadline)
+                        .font(theme.typography.bodySmall)
                         .foregroundStyle(.secondary)
                 }
             }
         }
         .padding(.horizontal, 10)
-        .padding(.vertical, 8)
+        .padding(.vertical, theme.spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: 6)
-                .fill(isSelected ? Color.white.opacity(0.1) : (isHovered ? Color.white.opacity(0.05) : Color.clear))
+            RoundedRectangle(cornerRadius: theme.radius.sm)
+                .fill(isSelected ? theme.colors.surfaceSelected : (isHovered ? theme.colors.surfaceHover : Color.clear))
         )
         .contentShape(Rectangle())
         .onChange(of: isRenameFocused) { _, focused in
