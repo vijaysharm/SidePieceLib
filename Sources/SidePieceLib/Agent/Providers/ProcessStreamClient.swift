@@ -35,6 +35,18 @@ public struct ProcessHandle: Sendable {
     public let writeLine: @Sendable (String) async throws -> Void
     public let terminate: @Sendable () async -> Void
     public let isRunning: @Sendable () async -> Bool
+    
+    public init(
+        stdout: AsyncThrowingStream<String, Error>,
+        writeLine: @Sendable @escaping (String) async throws -> Void,
+        terminate: @Sendable @escaping () async -> Void,
+        isRunning: @Sendable @escaping () async -> Bool
+    ) {
+        self.stdout = stdout
+        self.writeLine = writeLine
+        self.terminate = terminate
+        self.isRunning = isRunning
+    }
 }
 
 public enum ProcessStreamError: LocalizedError, Equatable, Sendable {
@@ -89,38 +101,57 @@ private actor ProcessActor {
     private var process: Process?
     private var stdinPipe: Pipe?
 
+    // Extra PATH directories that may not be in a GUI app's minimal PATH
+    private static let extraPathDirs: [String] = {
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        return [
+            home.appendingPathComponent(".local/bin").path,
+            "/opt/homebrew/bin",
+            "/opt/homebrew/sbin",
+            "/usr/local/bin",
+            home.appendingPathComponent(".cargo/bin").path,
+        ]
+    }()
+
+    private static func enrichedEnvironment(custom: [String: String]?) -> [String: String] {
+        var env = ProcessInfo.processInfo.environment
+        if let custom { for (k, v) in custom { env[k] = v } }
+
+        // Enrich PATH so /usr/bin/env and child processes can find CLI tools
+        let currentPath = env["PATH"] ?? "/usr/bin:/bin"
+        var seen = Set<String>()
+        var merged: [String] = []
+        for dir in currentPath.split(separator: ":").map(String.init) + extraPathDirs {
+            if seen.insert(dir).inserted {
+                merged.append(dir)
+            }
+        }
+        env["PATH"] = merged.joined(separator: ":")
+
+        return env
+    }
+
     func spawn(configuration: ProcessConfiguration) throws(ProcessStreamError) -> ProcessHandle {
         let process = Process()
         let stdoutPipe = Pipe()
         let stdinPipe = Pipe()
 
-        // Resolve executable path via PATH if not absolute
-        let resolvedPath: String
+        // No FileManager pre-checks — they fail under app sandbox.
+        // For absolute paths, set executableURL directly.
+        // For relative names (e.g. "claude"), use /usr/bin/env to resolve
+        // via the enriched PATH (same pattern as Grep.swift).
         if configuration.executablePath.hasPrefix("/") {
-            resolvedPath = configuration.executablePath
-        } else {
-            // Use /usr/bin/env to resolve from PATH
-            resolvedPath = "/usr/bin/env"
-        }
-
-        guard FileManager.default.fileExists(atPath: resolvedPath) else {
-            throw .executableNotFound(path: resolvedPath)
-        }
-
-        if resolvedPath == "/usr/bin/env" {
-            process.executableURL = URL(fileURLWithPath: resolvedPath)
-            process.arguments = [configuration.executablePath] + configuration.arguments
-        } else {
-            process.executableURL = URL(fileURLWithPath: resolvedPath)
+            process.executableURL = URL(fileURLWithPath: configuration.executablePath)
             process.arguments = configuration.arguments
+        } else {
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+            process.arguments = [configuration.executablePath] + configuration.arguments
         }
 
-        if let env = configuration.environment {
-            // Merge with current environment
-            var merged = ProcessInfo.processInfo.environment
-            for (key, value) in env { merged[key] = value }
-            process.environment = merged
-        }
+        // Always set an enriched environment so executables and their
+        // child processes can be found outside the app's minimal PATH
+        process.environment = Self.enrichedEnvironment(custom: configuration.environment)
+
         if let wd = configuration.workingDirectory {
             process.currentDirectoryURL = wd
         }
