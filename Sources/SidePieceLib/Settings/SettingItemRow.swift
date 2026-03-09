@@ -54,39 +54,46 @@ struct SettingItemRow: View {
                             .foregroundStyle(.secondary)
                     }
                     if let value = store.settingItemValues[item.id], case let .string(value) = value {
-                        let binding = Binding(
-                            get: { value },
-                            set: { newValue in
-                                store.send(.internal(.updateSetting(
-                                    itemID: item.id,
-                                    value: .string(newValue)
-                                )))
-                            }
-                        )
                         if options.contains(.multiline) {
-                            TextEditor(text: binding)
-                                .font(theme.typography.bodySmall)
-                                .scrollContentBackground(.hidden)
-                                .padding(.horizontal, theme.spacing.md)
-                                .padding(.vertical, theme.spacing.sm)
-                                .frame(minHeight: 120)
-                                .background(theme.colors.backgroundInput)
-                                .clipShape(RoundedRectangle(cornerRadius: theme.radius.sm))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: theme.radius.sm)
-                                        .stroke(theme.colors.borderSubtle, lineWidth: theme.borderWidth.hairline)
-                                )
+                            MultilineTextEditor(
+                                text: value,
+                                onTextChange: { newValue in
+                                    store.send(.internal(.updateSetting(
+                                        itemID: item.id,
+                                        value: .string(newValue)
+                                    )))
+                                }
+                            )
+                            .font(theme.typography.bodySmall)
+                            .scrollContentBackground(.hidden)
+                            .padding(.horizontal, theme.spacing.md)
+                            .padding(.vertical, theme.spacing.sm)
+                            .frame(minHeight: 120)
+                            .background(theme.colors.backgroundInput)
+                            .clipShape(RoundedRectangle(cornerRadius: theme.radius.sm))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: theme.radius.sm)
+                                    .stroke(theme.colors.borderSubtle, lineWidth: theme.borderWidth.hairline)
+                            )
                         } else {
-                            TextField(placeholder, text: binding)
-                                .textFieldStyle(.plain)
-                                .padding(.horizontal, theme.spacing.md)
-                                .padding(.vertical, theme.spacing.sm)
-                                .background(theme.colors.backgroundInput)
-                                .clipShape(RoundedRectangle(cornerRadius: theme.radius.sm))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: theme.radius.sm)
-                                        .stroke(theme.colors.borderSubtle, lineWidth: theme.borderWidth.hairline)
-                                )
+                            TextField(placeholder, text: Binding(
+                                get: { value },
+                                set: { newValue in
+                                    store.send(.internal(.updateSetting(
+                                        itemID: item.id,
+                                        value: .string(newValue)
+                                    )))
+                                }
+                            ))
+                            .textFieldStyle(.plain)
+                            .padding(.horizontal, theme.spacing.md)
+                            .padding(.vertical, theme.spacing.sm)
+                            .background(theme.colors.backgroundInput)
+                            .clipShape(RoundedRectangle(cornerRadius: theme.radius.sm))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: theme.radius.sm)
+                                    .stroke(theme.colors.borderSubtle, lineWidth: theme.borderWidth.hairline)
+                            )
                         }
                     }
                 }
@@ -203,6 +210,22 @@ struct SettingItemRow: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 4)
+    }
+}
+
+// MARK: - MultilineTextEditor
+
+fileprivate struct MultilineTextEditor: View {
+    let text: String
+    let onTextChange: (String) -> Void
+    @State private var localText: String = ""
+
+    var body: some View {
+        TextEditor(text: $localText)
+            .onAppear { localText = text }
+            .onChange(of: localText) { _, newValue in
+                onTextChange(newValue)
+            }
     }
 }
 
