@@ -312,6 +312,50 @@ public extension Model {
         )
     }
 
+    /// Create a Claude Code model (CLI-based, subprocess streaming)
+    static func claudeCode(
+        id: String,
+        modelId: String = "claude-sonnet-4-6-20250514",
+        executablePath: String = "claude",
+        dangerouslySkipPermissions: Bool = true,
+        properties: Set<Model.Properties> = []
+    ) -> Model {
+        let sessionStore = ClaudeCodeSessionStore()
+        return Model(
+            id: .init(id),
+            properties: properties,
+            stream: { items, options in
+                ClaudeCodeProvider(
+                    modelId: modelId,
+                    executablePath: executablePath,
+                    sessionStore: sessionStore,
+                    dangerouslySkipPermissions: dangerouslySkipPermissions
+                ).stream(items: items, options: options)
+            }
+        )
+    }
+
+    /// Create a Codex model (CLI-based, JSON-RPC subprocess)
+    static func codex(
+        id: String,
+        modelId: String = "codex",
+        apiKey: String,
+        executablePath: String = "codex",
+        properties: Set<Model.Properties> = []
+    ) -> Model {
+        Model(
+            id: .init(id),
+            properties: properties,
+            stream: { items, options in
+                CodexProvider(
+                    modelId: modelId,
+                    apiKey: apiKey,
+                    executablePath: executablePath
+                ).stream(items: items, options: options)
+            }
+        )
+    }
+
     /// Create a mock model for testing/preview (streams demo content)
     static func mock(
         id: String = "mock",
