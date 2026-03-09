@@ -106,6 +106,7 @@ public struct LoadingFeature: Sendable {
 
 struct LoadingView: View {
     @Bindable var store: StoreOf<LoadingFeature>
+    @Environment(\.theme) var theme
     
     var body: some View {
         ZStack {
@@ -114,5 +115,6 @@ struct LoadingView: View {
         .onAppear {
             store.send(.onAppear)
         }
+        .background(theme.colors.backgroundPrimary)
     }
 }
