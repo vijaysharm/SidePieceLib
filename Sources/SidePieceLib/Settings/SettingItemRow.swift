@@ -102,7 +102,7 @@ struct SettingItemRow: View {
                             }
                         }
                         .settingItemStyle(item)
-                        .frame(maxWidth: 200)
+                        .frame(maxWidth: 200, alignment: .trailing)
                     }
                 }
 
