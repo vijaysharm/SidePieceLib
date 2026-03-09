@@ -60,4 +60,74 @@ public struct ThemeColors: Sendable {
     let featureImageGen: Color
     let featurePDF: Color
     let featureBadgeBackground: Color
+    
+    public init(
+        backgroundPrimary: Color,
+        backgroundSecondary: Color,
+        backgroundInput: Color,
+        backgroundOverlay: Color,
+        scrim: Color,
+        surfaceHover: Color,
+        surfaceSelected: Color,
+        surfaceSubtle: Color,
+        textPrimary: Color,
+        textSecondary: Color,
+        textTertiary: Color,
+        textOnSelected: Color,
+        textOnSelectedSecondary: Color,
+        border: Color,
+        borderSubtle: Color,
+        borderActive: Color,
+        separator: Color,
+        accent: Color,
+        accentSubtle: Color,
+        statusError: Color,
+        statusErrorBackground: Color,
+        statusErrorBorder: Color,
+        statusSuccess: Color,
+        statusWarning: Color,
+        statusWarningIntense: Color,
+        statusInfo: Color,
+        featureFast: Color,
+        featureVision: Color,
+        featureReasoning: Color,
+        featureToolCalling: Color,
+        featureImageGen: Color,
+        featurePDF: Color,
+        featureBadgeBackground: Color
+    ) {
+        self.backgroundPrimary = backgroundPrimary
+        self.backgroundSecondary = backgroundSecondary
+        self.backgroundInput = backgroundInput
+        self.backgroundOverlay = backgroundOverlay
+        self.scrim = scrim
+        self.surfaceHover = surfaceHover
+        self.surfaceSelected = surfaceSelected
+        self.surfaceSubtle = surfaceSubtle
+        self.textPrimary = textPrimary
+        self.textSecondary = textSecondary
+        self.textTertiary = textTertiary
+        self.textOnSelected = textOnSelected
+        self.textOnSelectedSecondary = textOnSelectedSecondary
+        self.border = border
+        self.borderSubtle = borderSubtle
+        self.borderActive = borderActive
+        self.separator = separator
+        self.accent = accent
+        self.accentSubtle = accentSubtle
+        self.statusError = statusError
+        self.statusErrorBackground = statusErrorBackground
+        self.statusErrorBorder = statusErrorBorder
+        self.statusSuccess = statusSuccess
+        self.statusWarning = statusWarning
+        self.statusWarningIntense = statusWarningIntense
+        self.statusInfo = statusInfo
+        self.featureFast = featureFast
+        self.featureVision = featureVision
+        self.featureReasoning = featureReasoning
+        self.featureToolCalling = featureToolCalling
+        self.featureImageGen = featureImageGen
+        self.featurePDF = featurePDF
+        self.featureBadgeBackground = featureBadgeBackground
+    }
 }
