@@ -74,7 +74,7 @@ public struct SettingsFeature: Sendable {
                             case let .toggle(key):
                                 guard let value = try? key.read() else { break }
                                 result[next.id] = .bool(value)
-                            case let .text(_, key), let .segmented(_, key), let .dropdown(_, key):
+                            case let .text(_, _, key), let .segmented(_, key), let .dropdown(_, key):
                                 guard let value = try? key.read() else { break }
                                 result[next.id] = .string(value)
                             case let .secureText(_, key):

@@ -44,7 +44,7 @@ struct SettingItemRow: View {
                     }
                 }
 
-            case let .text(placeholder, _):
+            case let .text(placeholder, options, _):
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item.title)
                         .font(theme.typography.bodySmall)
@@ -54,7 +54,7 @@ struct SettingItemRow: View {
                             .foregroundStyle(.secondary)
                     }
                     if let value = store.settingItemValues[item.id], case let .string(value) = value {
-                        TextField(placeholder, text: Binding(
+                        let binding = Binding(
                             get: { value },
                             set: { newValue in
                                 store.send(.internal(.updateSetting(
@@ -62,16 +62,32 @@ struct SettingItemRow: View {
                                     value: .string(newValue)
                                 )))
                             }
-                        ))
-                        .textFieldStyle(.plain)
-                        .padding(.horizontal, theme.spacing.md)
-                        .padding(.vertical, theme.spacing.sm)
-                        .background(theme.colors.backgroundInput)
-                        .clipShape(RoundedRectangle(cornerRadius: theme.radius.sm))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: theme.radius.sm)
-                                .stroke(theme.colors.borderSubtle, lineWidth: theme.borderWidth.hairline)
                         )
+                        if options.contains(.multiline) {
+                            TextEditor(text: binding)
+                                .font(theme.typography.bodySmall)
+                                .scrollContentBackground(.hidden)
+                                .padding(.horizontal, theme.spacing.md)
+                                .padding(.vertical, theme.spacing.sm)
+                                .frame(minHeight: 120)
+                                .background(theme.colors.backgroundInput)
+                                .clipShape(RoundedRectangle(cornerRadius: theme.radius.sm))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: theme.radius.sm)
+                                        .stroke(theme.colors.borderSubtle, lineWidth: theme.borderWidth.hairline)
+                                )
+                        } else {
+                            TextField(placeholder, text: binding)
+                                .textFieldStyle(.plain)
+                                .padding(.horizontal, theme.spacing.md)
+                                .padding(.vertical, theme.spacing.sm)
+                                .background(theme.colors.backgroundInput)
+                                .clipShape(RoundedRectangle(cornerRadius: theme.radius.sm))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: theme.radius.sm)
+                                        .stroke(theme.colors.borderSubtle, lineWidth: theme.borderWidth.hairline)
+                                )
+                        }
                     }
                 }
 

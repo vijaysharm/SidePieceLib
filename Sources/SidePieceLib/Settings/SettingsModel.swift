@@ -9,8 +9,14 @@ import Foundation
 public protocol SettingIdentifiable: Hashable, Sendable, CustomStringConvertible {}
 
 public enum SettingType: Equatable, Sendable {
+    public struct TextOptions: OptionSet, Equatable, Sendable {
+        public let rawValue: Int
+        public init(rawValue: Int) { self.rawValue = rawValue }
+        public static let multiline = TextOptions(rawValue: 1 << 0)
+    }
+
     case toggle(StorageKey<Bool>)
-    case text(placeholder: String, StorageKey<String>)
+    case text(placeholder: String, options: TextOptions = [], StorageKey<String>)
     case dropdown(options: IdentifiedArrayOf<Option>, StorageKey<String>)
     case segmented(options: IdentifiedArrayOf<Option>, StorageKey<String>)
     case secureText(placeholder: String, StorageKey<String>)
@@ -79,7 +85,7 @@ extension SettingItem {
                 case .string, .secure:
                     break
                 }
-            case let .text(_, key),
+            case let .text(_, _, key),
                 let .dropdown(_, key),
                 let .segmented(_, key),
                 let .secureText(_, key):
