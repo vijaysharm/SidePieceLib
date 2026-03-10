@@ -36,7 +36,8 @@ public struct Model: Equatable, Sendable {
         case toolCall
         case temperature
         case imageGeneration
-        
+        case managedTools
+
         case preferred
         case archived
 
@@ -100,6 +101,7 @@ public struct Model: Equatable, Sendable {
     var isArchived: Bool { properties.contains(.archived) }
     var hasReasoning: Bool { properties.contains(.reasoning) }
     var hasToolCalling: Bool { properties.contains(.toolCall) }
+    var hasManagedTools: Bool { properties.contains(.managedTools) }
     var hasImageGeneration: Bool { properties.contains(.imageGeneration) }
     var hasVision: Bool {
         for property in properties {
@@ -321,9 +323,12 @@ public extension Model {
         properties: Set<Model.Properties> = []
     ) -> Model {
         let sessionStore = ClaudeCodeSessionStore()
+        var allProperties = properties
+        allProperties.insert(.managedTools)
+        allProperties.insert(.toolCall)
         return Model(
             id: .init(id),
-            properties: properties,
+            properties: allProperties,
             stream: { items, options in
                 ClaudeCodeProvider(
                     modelId: modelId,
@@ -343,9 +348,12 @@ public extension Model {
         executablePath: String = "codex",
         properties: Set<Model.Properties> = []
     ) -> Model {
-        Model(
+        var allProperties = properties
+        allProperties.insert(.managedTools)
+        allProperties.insert(.toolCall)
+        return Model(
             id: .init(id),
-            properties: properties,
+            properties: allProperties,
             stream: { items, options in
                 CodexProvider(
                     modelId: modelId,

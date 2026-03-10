@@ -43,6 +43,7 @@ public struct MessageItemResponseFeature: Sendable {
         @CasePathable
         public enum InternalAction: Equatable, Sendable {
             case toolCallComplete(ToolCallBlockFeature.State, Result<String, ToolExecutionError>)
+            case managedToolComplete(ToolCallBlockFeature.State)
         }
 
         case `internal`(InternalAction)
@@ -288,6 +289,14 @@ public struct MessageItemResponseFeature: Sendable {
                 }
 
                 return .send(.delegate(.restartStream))
+
+            case let .internal(.managedToolComplete(tool)):
+                guard let block = state.blocks[id: tool.id], case var .toolCall(data) = block else {
+                    return .none
+                }
+                data.status = .completed
+                state.blocks[id: tool.id] = .toolCall(data)
+                return .none
 
             case let .blocks(.element(id: id, action: .toolCall(.delegate(.response(response))))):
                 guard let tool = state.blocks[id: id] else {
