@@ -36,7 +36,8 @@ public struct Model: Equatable, Sendable {
         case toolCall
         case temperature
         case imageGeneration
-        
+        case managedTools
+
         case preferred
         case archived
 
@@ -100,6 +101,7 @@ public struct Model: Equatable, Sendable {
     var isArchived: Bool { properties.contains(.archived) }
     var hasReasoning: Bool { properties.contains(.reasoning) }
     var hasToolCalling: Bool { properties.contains(.toolCall) }
+    var hasManagedTools: Bool { properties.contains(.managedTools) }
     var hasImageGeneration: Bool { properties.contains(.imageGeneration) }
     var hasVision: Bool {
         for property in properties {
@@ -307,6 +309,56 @@ public extension Model {
                     modelId: modelId,
                     apiKey: apiKey,
                     baseURL: baseURL
+                ).stream(items: items, options: options)
+            }
+        )
+    }
+
+    /// Create a Claude Code model (CLI-based, subprocess streaming)
+    static func claudeCode(
+        id: String,
+        modelId: String = "sonnet",
+        executablePath: String = "claude",
+        dangerouslySkipPermissions: Bool = true,
+        properties: Set<Model.Properties> = []
+    ) -> Model {
+        let sessionStore = ClaudeCodeSessionStore()
+        var allProperties = properties
+        allProperties.insert(.managedTools)
+        allProperties.insert(.toolCall)
+        return Model(
+            id: .init(id),
+            properties: allProperties,
+            stream: { items, options in
+                ClaudeCodeProvider(
+                    modelId: modelId,
+                    executablePath: executablePath,
+                    sessionStore: sessionStore,
+                    dangerouslySkipPermissions: dangerouslySkipPermissions
+                ).stream(items: items, options: options)
+            }
+        )
+    }
+
+    /// Create a Codex model (CLI-based, JSON-RPC subprocess)
+    static func codex(
+        id: String,
+        modelId: String = "codex",
+        apiKey: String? = nil,
+        executablePath: String = "codex",
+        properties: Set<Model.Properties> = []
+    ) -> Model {
+        var allProperties = properties
+        allProperties.insert(.managedTools)
+        allProperties.insert(.toolCall)
+        return Model(
+            id: .init(id),
+            properties: allProperties,
+            stream: { items, options in
+                CodexProvider(
+                    modelId: modelId,
+                    apiKey: apiKey,
+                    executablePath: executablePath
                 ).stream(items: items, options: options)
             }
         )

@@ -107,6 +107,15 @@ public struct MessagesFeature: Sendable {
                 return .send(.title(.stream(model, history)))
 
             case let .messageItems(.element(id, action: .response(.delegate(.executeToolCall(toolCall))))):
+                // Harness models manage their own tools — auto-complete, skip execution
+                let messageModel = state.messageItems[id: id]?.prompt.agentToolbar.selectedModel
+                if messageModel?.hasManagedTools == true {
+                    return .send(.messageItems(.element(
+                        id: id,
+                        action: .response(.internal(.managedToolComplete(toolCall)))
+                    )))
+                }
+
                 let interaction = toolRegistryClient.resolveInteraction(toolCall.name, toolCall.arguments)
 
                 // If the tool is in the "always allowed" set AND the interaction
