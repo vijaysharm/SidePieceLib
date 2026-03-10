@@ -17,9 +17,15 @@ public enum NDJSONParser {
             let task = Task {
                 do {
                     let decoder = JSONDecoder()
+                    var lineCount = 0
                     for try await line in lines {
+                        lineCount += 1
                         let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
-                        guard !trimmed.isEmpty else { continue }
+                        if lineCount <= 3 {
+                            let safe = trimmed.prefix(150).map { $0.isASCII && !$0.isNewline ? $0 : "?" }.map(String.init).joined()
+                            print("[NDJSONParser] line \(lineCount) (\(trimmed.count) chars): \(safe)")
+                        }
+                        guard !trimmed.isEmpty, trimmed.hasPrefix("{") else { continue }
 
                         let json = try decoder.decode(JSONValue.self, from: Data(trimmed.utf8))
                         continuation.yield(json)

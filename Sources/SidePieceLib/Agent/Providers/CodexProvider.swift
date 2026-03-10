@@ -84,12 +84,12 @@ private func classify(_ obj: [String: JSONValue]) -> JSONRPCMessageKind? {
 public struct CodexProvider: AIProvider, Sendable {
     public let id: String = "codex"
     public let modelId: String
-    let apiKey: String
+    let apiKey: String?
     let executablePath: String
 
     public init(
         modelId: String,
-        apiKey: String,
+        apiKey: String? = nil,
         executablePath: String = "codex"
     ) {
         self.modelId = modelId
@@ -111,9 +111,13 @@ public struct CodexProvider: AIProvider, Sendable {
                         return
                     }
 
+                    var arguments = ["app-server"]
+                    if let apiKey, !apiKey.isEmpty {
+                        arguments.append(contentsOf: ["--api-key", apiKey])
+                    }
                     let configuration = ProcessConfiguration(
                         executablePath: executablePath,
-                        arguments: ["app-server", "--api-key", apiKey]
+                        arguments: arguments
                     )
 
                     @Dependency(\.processStreamClient) var processClient
@@ -150,6 +154,13 @@ public struct CodexProvider: AIProvider, Sendable {
                         ])
                         let jsonString = try response.toJSONString()
                         try await handle.writeLine(jsonString)
+                    }
+
+                    // Drain stderr in background
+                    _ = Task {
+                        for try await line in handle.stderr {
+                            print("[Codex] stderr: \(String(line.prefix(200)))")
+                        }
                     }
 
                     // Send session.start

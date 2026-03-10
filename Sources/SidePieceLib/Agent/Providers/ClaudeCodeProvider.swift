@@ -3,7 +3,7 @@
 //  SidePiece
 //
 //  AIProvider implementation wrapping the Claude CLI in headless streaming mode.
-//  Uses `claude -p --output-format stream-json` for unidirectional NDJSON streaming.
+//  Uses `claude -p --output-format stream-json --verbose` for NDJSON streaming.
 //
 
 import Dependencies
@@ -76,7 +76,7 @@ public struct ClaudeCodeProvider: AIProvider, Sendable {
                     }
 
                     // Build CLI arguments
-                    var args = ["-p", prompt, "--output-format", "stream-json"]
+                    var args = ["-p", prompt, "--output-format", "stream-json", "--verbose"]
 
                     if let sessionId = await sessionStore.sessionId {
                         args.append(contentsOf: ["--resume", sessionId])
@@ -111,110 +111,111 @@ public struct ClaudeCodeProvider: AIProvider, Sendable {
                         return
                     }
 
-                    let events = NDJSONParser.parse(handle.stdout)
+                    // Close stdin immediately — claude -p gets the prompt via CLI args
+                    // and reads stdin until EOF, so an open pipe would hang forever.
+                    await handle.closeStdin()
 
-                    // Track state for Anthropic-compatible event mapping
-                    var toolArgsById: [String: String] = [:]
-                    var toolNamesById: [String: String] = [:]
-                    var blockIndexToToolId: [Int: String] = [:]
+                    // Drain stderr in background so the pipe doesn't block
+                    _ = Task {
+                        for try await line in handle.stderr {
+                            print("[ClaudeCode] stderr: \(String(line.prefix(200)))")
+                        }
+                    }
+
+                    let events = NDJSONParser.parse(handle.stdout)
                     var usage: TokenUsage?
-                    var stopReason: String?
+                    var eventCount = 0
 
                     for try await json in events {
                         guard case let .object(obj) = json else { continue }
                         let type = obj["type"]?.stringValue ?? ""
+                        eventCount += 1
+                        if eventCount <= 5 { print("[ClaudeCode] event #\(eventCount): type=\(type)") }
 
                         switch type {
-                        // Claude Code emits an `init` event with session metadata
+                        // Claude Code CLI emits a "system" init event with session metadata
                         case "system":
                             if let sessionId = obj["session_id"]?.stringValue {
                                 await sessionStore.update(sessionId: sessionId)
                             }
 
-                        // Reuse Anthropic event mapping — Claude Code's stream-json
-                        // format uses the same event types as the Anthropic Messages API.
-                        case "message_start":
-                            if let msg = obj["message"]?.objectValue,
-                               let u = msg["usage"]?.objectValue {
+                        // "assistant" events contain the full message with content blocks
+                        case "assistant":
+                            if let msg = obj["message"]?.objectValue {
+                                // Extract usage
+                                if let u = msg["usage"]?.objectValue {
+                                    let input = u["input_tokens"]?.intValue ?? 0
+                                    let output = u["output_tokens"]?.intValue ?? 0
+                                    let cacheCreation = u["cache_creation_input_tokens"]?.intValue ?? 0
+                                    let cacheRead = u["cache_read_input_tokens"]?.intValue ?? 0
+                                    usage = TokenUsage(
+                                        promptTokens: input + cacheCreation + cacheRead,
+                                        completionTokens: output
+                                    )
+                                }
+
+                                // Process content blocks
+                                if let content = msg["content"]?.arrayValue {
+                                    for block in content {
+                                        guard let blockObj = block.objectValue,
+                                              let blockType = blockObj["type"]?.stringValue else { continue }
+
+                                        switch blockType {
+                                        case "text":
+                                            let text = blockObj["text"]?.stringValue ?? ""
+                                            if !text.isEmpty {
+                                                continuation.yield(.textDelta(text))
+                                            }
+
+                                        case "thinking":
+                                            let thinking = blockObj["thinking"]?.stringValue ?? ""
+                                            if !thinking.isEmpty {
+                                                continuation.yield(.reasoningDelta(thinking))
+                                            }
+
+                                        case "tool_use":
+                                            let toolId = blockObj["id"]?.stringValue ?? "call_\(UUID().uuidString)"
+                                            let name = blockObj["name"]?.stringValue ?? "tool"
+                                            let input = blockObj["input"]
+                                            let args: String
+                                            if let input {
+                                                // Encode the input back to JSON string
+                                                if let data = try? JSONEncoder().encode(input) {
+                                                    args = String(data: data, encoding: .utf8) ?? "{}"
+                                                } else {
+                                                    args = "{}"
+                                                }
+                                            } else {
+                                                args = "{}"
+                                            }
+                                            continuation.yield(.toolCallStart(id: toolId, name: name))
+                                            continuation.yield(.toolCallDelta(id: toolId, args: args))
+                                            continuation.yield(.toolCallEnd(id: toolId, name: name, arguments: args))
+
+                                        default:
+                                            break
+                                        }
+                                    }
+                                }
+                            }
+
+                        // "result" is the final event with session and usage info
+                        case "result":
+                            if let sessionId = obj["session_id"]?.stringValue {
+                                await sessionStore.update(sessionId: sessionId)
+                            }
+                            if let u = obj["usage"]?.objectValue {
                                 let input = u["input_tokens"]?.intValue ?? 0
                                 let output = u["output_tokens"]?.intValue ?? 0
                                 usage = TokenUsage(promptTokens: input, completionTokens: output)
                             }
-
-                        case "content_block_start":
-                            let index = obj["index"]?.intValue ?? 0
-                            if let block = obj["content_block"]?.objectValue,
-                               let bType = block["type"]?.stringValue {
-                                if bType == "tool_use" {
-                                    let toolId = block["id"]?.stringValue ?? "call_\(UUID().uuidString)"
-                                    let name = block["name"]?.stringValue ?? "tool"
-                                    blockIndexToToolId[index] = toolId
-                                    toolArgsById[toolId] = ""
-                                    toolNamesById[toolId] = name
-                                    continuation.yield(.toolCallStart(id: toolId, name: name))
-                                }
-                            }
-
-                        case "content_block_delta":
-                            let index = obj["index"]?.intValue ?? 0
-                            guard let delta = obj["delta"]?.objectValue else { break }
-                            let dType = delta["type"]?.stringValue ?? ""
-
-                            if dType == "text_delta" {
-                                let text = delta["text"]?.stringValue ?? ""
-                                if !text.isEmpty {
-                                    continuation.yield(.textDelta(text))
-                                }
-                            } else if dType == "input_json_delta" {
-                                let frag = delta["partial_json"]?.stringValue ?? ""
-                                if let toolId = blockIndexToToolId[index], !frag.isEmpty {
-                                    toolArgsById[toolId, default: ""] += frag
-                                    continuation.yield(.toolCallDelta(id: toolId, args: frag))
-                                }
-                            } else if dType == "thinking_delta" {
-                                let t = delta["thinking"]?.stringValue ?? ""
-                                if !t.isEmpty {
-                                    continuation.yield(.reasoningDelta(t))
-                                }
-                            }
-
-                        case "content_block_stop":
-                            let index = obj["index"]?.intValue ?? 0
-                            if let toolId = blockIndexToToolId[index] {
-                                let args = toolArgsById[toolId] ?? "{}"
-                                let name = toolNamesById[toolId] ?? "tool"
-                                continuation.yield(.toolCallEnd(id: toolId, name: name, arguments: args))
-                                blockIndexToToolId.removeValue(forKey: index)
-                            }
-
-                        case "message_delta":
-                            if let u = obj["usage"]?.objectValue {
-                                let input = u["input_tokens"]?.intValue ?? usage?.promptTokens ?? 0
-                                let output = u["output_tokens"]?.intValue ?? usage?.completionTokens ?? 0
-                                usage = TokenUsage(promptTokens: input, completionTokens: output)
-                            }
-                            if let delta = obj["delta"]?.objectValue,
-                               let reason = delta["stop_reason"]?.stringValue {
-                                stopReason = reason
-                            }
-
-                        case "message_stop":
-                            let finishReason: FinishReason = switch stopReason {
-                            case "tool_use": .toolCalls
-                            case "max_tokens": .length
-                            case "content_filter": .contentFilter
-                            default: .stop
-                            }
-                            continuation.yield(.finished(usage: usage, finishReason: finishReason))
-
-                        case "result":
-                            // Final result event — update usage if present
-                            if let input = obj["input_tokens"]?.intValue,
-                               let output = obj["output_tokens"]?.intValue {
-                                usage = TokenUsage(promptTokens: input, completionTokens: output)
-                            }
-                            if let sessionId = obj["session_id"]?.stringValue {
-                                await sessionStore.update(sessionId: sessionId)
+                            let isError = obj["is_error"]?.boolValue ?? false
+                            if isError {
+                                let msg = obj["result"]?.stringValue ?? "Claude Code error"
+                                let error = LLMError(code: "CLAUDE_CODE_ERROR", message: msg)
+                                continuation.yield(.finished(usage: usage, finishReason: .error(error)))
+                            } else {
+                                continuation.yield(.finished(usage: usage, finishReason: .stop))
                             }
 
                         case "error":
@@ -225,6 +226,7 @@ public struct ClaudeCodeProvider: AIProvider, Sendable {
                             continuation.yield(.finished(usage: usage, finishReason: .error(error)))
 
                         default:
+                            // Ignore rate_limit_event and other unknown types
                             break
                         }
                     }

@@ -315,7 +315,7 @@ public extension Model {
     /// Create a Claude Code model (CLI-based, subprocess streaming)
     static func claudeCode(
         id: String,
-        modelId: String = "claude-sonnet-4-6-20250514",
+        modelId: String = "sonnet",
         executablePath: String = "claude",
         dangerouslySkipPermissions: Bool = true,
         properties: Set<Model.Properties> = []
@@ -339,7 +339,7 @@ public extension Model {
     static func codex(
         id: String,
         modelId: String = "codex",
-        apiKey: String,
+        apiKey: String? = nil,
         executablePath: String = "codex",
         properties: Set<Model.Properties> = []
     ) -> Model {
