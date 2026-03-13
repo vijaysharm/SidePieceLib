@@ -66,7 +66,14 @@ public struct AnthropicProvider: AIProvider, Sendable {
                                let u = msg["usage"]?.objectValue {
                                 let input = u["input_tokens"]?.intValue ?? 0
                                 let output = u["output_tokens"]?.intValue ?? 0
-                                usage = TokenUsage(promptTokens: input, completionTokens: output)
+                                let cacheRead = u["cache_read_input_tokens"]?.intValue ?? 0
+                                let cacheWrite = u["cache_creation_input_tokens"]?.intValue ?? 0
+                                usage = TokenUsage(
+                                    promptTokens: input,
+                                    completionTokens: output,
+                                    cacheReadTokens: cacheRead,
+                                    cacheWriteTokens: cacheWrite
+                                )
                             }
 
                         case "content_block_start":
@@ -197,6 +204,7 @@ public struct AnthropicProvider: AIProvider, Sendable {
 
         // Reasoning / thinking control
         if let effort = options.reasoningEffort {
+            let isAdaptiveModel = modelId.contains("opus-4") || modelId.contains("sonnet-4")
             switch effort {
             case .none:
                 body["thinking"] = .object([
@@ -217,7 +225,26 @@ public struct AnthropicProvider: AIProvider, Sendable {
                     "type": .string("enabled"),
                     "budget_tokens": .int(8192)
                 ])
+            case .max:
+                // Adaptive models support higher budgets
+                let budget = isAdaptiveModel ? 32768 : 16384
+                body["thinking"] = .object([
+                    "type": .string("enabled"),
+                    "budget_tokens": .int(budget)
+                ])
             }
+        }
+
+        // Prompt caching — attach cache_control to system prompt
+        if let retention = options.cacheRetention, retention != .none,
+           let sys = options.systemPrompt {
+            body["system"] = .array([
+                .object([
+                    "type": .string("text"),
+                    "text": .string(sys),
+                    "cache_control": .object(["type": .string("ephemeral")])
+                ])
+            ])
         }
 
         // Tools

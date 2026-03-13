@@ -211,11 +211,17 @@ public struct OpenAIProvider: AIProvider, Sendable {
             body["max_output_tokens"] = .int(m)
         }
 
-        // Reasoning effort
+        // Reasoning effort (OpenAI supports none/low/medium/high; .max maps to "high")
         if let effort = options.reasoningEffort {
+            let openAIEffort = (effort == .max) ? "high" : effort.rawValue
             body["reasoning"] = .object([
-                "effort": .string(effort.rawValue)
+                "effort": .string(openAIEffort)
             ])
+        }
+
+        // Service tier
+        if let tier = options.serviceTier {
+            body["service_tier"] = .string(tier.rawValue)
         }
 
         // Tools
