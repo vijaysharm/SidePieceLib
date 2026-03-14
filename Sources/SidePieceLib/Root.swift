@@ -62,15 +62,13 @@ public struct RootFeature: Sendable {
         Reduce { state, action in
             switch action {
             case .onAppear:
-                return .concatenate(
-                    .merge(
-                        // TODO: I wonder if these should be done sequentially
-                        // TODO: Maybe only when we support changing shortcuts through settings
-                        .send(.settings(.loadStoredKeyStatuses)),
-                        .send(.shortcuts(.start)),
-                    ),
-                    .send(.internal(.ready))
-                )
+                return .run { send in
+                    // TODO: I wonder if these should be done sequentially
+                    // TODO: Maybe only when we support changing shortcuts through settings
+                    await send(.settings(.loadStoredKeyStatuses))
+                    await send(.shortcuts(.start))
+                    await send(.internal(.ready))
+                }
             case .onDisappear:
                 return .send(.shortcuts(.stop))
             case .project(.delegate(.settings)):
@@ -93,21 +91,9 @@ public struct RootFeature: Sendable {
                 ))
                 return .none
             case .settings(.delegate(.dismiss)):
-                guard case .settings = state.page else { return .none }
-                state.page = .project
                 // TODO: Saving the settings should be done on background thread
                 // TODO: This also means that settings are not saved until the user leaves the settings view
-                for category in state.settings.categories {
-                    for section in category.sections {
-                        for item in section.items {
-                            if let value = state.settings.settingItemValues[item.id],
-                               state.settings.modifiedSettingItemIDs.contains(item.id) {
-                                try? item.write(value)
-                            }
-                        }
-                    }
-                }
-                state.settings.modifiedSettingItemIDs.removeAll()
+                dismissSettings(&state)
                 return .none
             case let .destination(.presented(.directorySelection(.recentProjectsSelection(.delegate(.openUrl(url)))))):
                 state.destination = nil
@@ -154,16 +140,16 @@ public struct RootFeature: Sendable {
                 return .none
             case .shortcuts(.delegate(.shortcut(.closeOpenDialogs))):
                 state.destination = nil
+                dismissSettings(&state)
                 guard let id = state.project.selectedConversationID else { return .none }
-                return .merge(
-                    .send(.project(.conversations(.element(id: id, action: .dismissContextMenu)))),
-                    reduce(into: &state, action: .settings(.delegate(.dismiss)))
-                )
+                return .send(.project(.conversations(.element(id: id, action: .dismissContextMenu))))
             case .shortcuts(.delegate(.shortcut(.nextAgent))):
                 guard let conversationID = state.project.selectedConversationID else { return .none }
                 return .send(.project(.conversations(.element(id: conversationID, action: .mainTextView(.agentToolbar(.selectNextAgent))))))
             case .shortcuts(.delegate(.shortcut(.openSettings))):
-                return reduce(into: &state, action: .project(.delegate(.settings)))
+                guard case .project = state.page else { return .none }
+                state.page = .settings
+                return .none
             case .internal:
                 return .none
             case .shortcuts:
@@ -177,6 +163,22 @@ public struct RootFeature: Sendable {
             }
         }
         .ifLet(\.$destination, action: \.destination)
+    }
+
+    private func dismissSettings(_ state: inout State) {
+        guard case .settings = state.page else { return }
+        state.page = .project
+        for category in state.settings.categories {
+            for section in category.sections {
+                for item in section.items {
+                    if let value = state.settings.settingItemValues[item.id],
+                       state.settings.modifiedSettingItemIDs.contains(item.id) {
+                        try? item.write(value)
+                    }
+                }
+            }
+        }
+        state.settings.modifiedSettingItemIDs.removeAll()
     }
 }
 
@@ -232,8 +234,8 @@ struct RootView: View {
             }
         }
         .sheet(item: $store.scope(
-            state: \.destination?.directorySelection,
-            action: \.destination.directorySelection)
+            state: \.$destination,
+            action: \.destination).directorySelection
         ) { store in
             DirectoryModalView(store: store)
                 .frame(minHeight: 300)

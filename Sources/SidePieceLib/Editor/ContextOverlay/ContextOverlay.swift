@@ -115,7 +115,7 @@ public struct ContextOverlayFeature: Sendable {
     }
     
     @Dependency(\.contextOverlayClient) var client
-    @Dependency(\.mainQueue) var mainQueue
+    @Dependency(\.continuousClock) var clock
     
     enum CancelID {
         case search
@@ -148,8 +148,10 @@ public struct ContextOverlayFeature: Sendable {
                     state.selected = state.action.first?.first
                     return .none
                 }
-                return .send(.internal(.performSearch(text)))
-                    .debounce(id: CancelID.search, for: .milliseconds(300), scheduler: mainQueue)
+                return .run { send in
+                    try await clock.sleep(for: .milliseconds(300))
+                    await send(.internal(.performSearch(text)))
+                }.cancellable(id: CancelID.search, cancelInFlight: true)
 
             case .reset:
                 state.filter = ""

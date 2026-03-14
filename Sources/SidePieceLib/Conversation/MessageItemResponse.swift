@@ -208,7 +208,7 @@ public struct MessageItemResponseFeature: Sendable {
                 }
 
             case let .executeToolCallApproved(toolCall):
-                var effects: [Effect<Action>] = []
+                var effects: [EffectOf<Self>] = []
                 let projectURL = state.projectURL
 
                 // Merge user response into arguments if this was an interactive tool
@@ -309,23 +309,22 @@ public struct MessageItemResponseFeature: Sendable {
 
                 switch response {
                 case .allowOnce, .allowAlways, .input:
-                    return .concatenate([
-                        .send(.delegate(.toolInteractionResponse(response, data))),
-                        .send(.executeToolCallApproved(data))
-                    ])
+                    return .run { send in
+                        await send(.delegate(.toolInteractionResponse(response, data)))
+                        await send(.executeToolCallApproved(data))
+                    }
 
                 case .deny:
                     data.status = .denied
                     state.blocks[id: id] = .toolCall(data)
 
-                    var effects: [Effect<Action>] = [
-                        .send(.delegate(.toolInteractionResponse(response, data)))
-                    ]
-                    if let nextTool = state.nextWaitingBlock {
-                        effects.append(.send(.delegate(.executeToolCall(nextTool))))
+                    let nextTool = state.nextWaitingBlock
+                    return .run { send in
+                        await send(.delegate(.toolInteractionResponse(response, data)))
+                        if let nextTool {
+                            await send(.delegate(.executeToolCall(nextTool)))
+                        }
                     }
-
-                    return .concatenate(effects)
                 }
 
             case .blocks:
