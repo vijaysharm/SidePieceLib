@@ -8,7 +8,7 @@ import Foundation
 
 @Reducer
 public struct ConversationPersistenceFeature: Sendable {
-    @Dependency(\.mainQueue) var mainQueue
+    @Dependency(\.continuousClock) var clock
     @Dependency(\.conversationStorageClient) var conversationStorageClient
     
     enum CancelID: Hashable {
@@ -37,8 +37,10 @@ public struct ConversationPersistenceFeature: Sendable {
             // Draft auto-save: debounced on text changes
             case let .conversations(.element(id: id, action: .mainTextView(.inputField))):
                 guard state.conversations[id: id]?.messages == nil else { return .none }
-                return .send(.internal(.saveDraft(id)))
-                    .debounce(id: CancelID.draftSave(id), for: .milliseconds(500), scheduler: mainQueue)
+                return .run { send in
+                    try await clock.sleep(for: .milliseconds(500))
+                    await send(.internal(.saveDraft(id)))
+                }.cancellable(id: CancelID.draftSave(id), cancelInFlight: true)
             
             case let .internal(.saveConversation(conversationID)):
                 guard let conversation = state.conversations[id: conversationID] else { return .none }

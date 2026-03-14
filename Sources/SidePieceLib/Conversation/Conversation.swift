@@ -306,7 +306,7 @@ public struct ConversationFeature: Sendable {
         }
     }
     
-    func addConversation(_ state: inout ConversationFeature.State) -> Effect<Action> {
+    func addConversation(_ state: inout ConversationFeature.State) -> EffectOf<Self> {
         guard case .none = state.mainTextView.inputField.action else { return .none }
         guard let attributedString = state.mainTextView.inputField.textContentStorage.textStorage else {
             return .none
@@ -338,7 +338,7 @@ public struct ConversationFeature: Sendable {
         return .send(.messages(.startStreaming(prompt)))
     }
     
-    func editConversation(id: UUID, _ state: inout ConversationFeature.State) -> Effect<Action> {
+    func editConversation(id: UUID, _ state: inout ConversationFeature.State) -> EffectOf<Self> {
         guard var messages = state.messages else { return .none }
         guard let index = messages.messageItems.index(id: id) else { return .none }
         // TODO: Need to explicitly stop any messages that appear after this one

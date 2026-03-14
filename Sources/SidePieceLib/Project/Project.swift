@@ -154,7 +154,7 @@ public struct ProjectFeature: Sendable {
     @Dependency(\.projectClient) var projectClient
     @Dependency(\.recentProjectsClient) var recentProjectsClient
     @Dependency(\.conversationStorageClient) var conversationStorageClient
-    @Dependency(\.mainQueue) var mainQueue
+    @Dependency(\.continuousClock) var clock
     @Dependency(\.uuid) var uuid
 
     enum CancelID {
@@ -323,8 +323,10 @@ public struct ProjectFeature: Sendable {
                     state.filteredConversationIDs = nil
                     return .cancel(id: CancelID.search)
                 }
-                return .send(.internal(.performSearch(text)))
-                    .debounce(id: CancelID.search, for: .milliseconds(300), scheduler: mainQueue)
+                return .run { send in
+                    try await clock.sleep(for: .milliseconds(300))
+                    await send(.internal(.performSearch(text)))
+                }.cancellable(id: CancelID.search, cancelInFlight: true)
 
             case let .splitViewVisibilityChanged(visibility):
                 state.$splitViewVisibility.withLock { $0 = visibility }
