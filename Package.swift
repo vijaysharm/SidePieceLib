@@ -13,7 +13,11 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "1.24.1"),
+        .package(
+            url: "https://github.com/pointfreeco/swift-composable-architecture",
+            from: "1.25.4",
+            traits: ["ComposableArchitecture2Deprecations"]
+        ),
         .package(url: "https://github.com/vijaysharm/textual", branch: "main"),
     ],
     targets: [

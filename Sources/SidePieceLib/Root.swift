@@ -157,13 +157,13 @@ public struct RootFeature: Sendable {
                 guard let id = state.project.selectedConversationID else { return .none }
                 return .merge(
                     .send(.project(.conversations(.element(id: id, action: .dismissContextMenu)))),
-                    reduce(into: &state, action: .settings(.delegate(.dismiss)))
+                    .send(.settings(.delegate(.dismiss)))
                 )
             case .shortcuts(.delegate(.shortcut(.nextAgent))):
                 guard let conversationID = state.project.selectedConversationID else { return .none }
                 return .send(.project(.conversations(.element(id: conversationID, action: .mainTextView(.agentToolbar(.selectNextAgent))))))
             case .shortcuts(.delegate(.shortcut(.openSettings))):
-                return reduce(into: &state, action: .project(.delegate(.settings)))
+                return .send(.project(.delegate(.settings)))
             case .internal:
                 return .none
             case .shortcuts:

@@ -190,7 +190,7 @@ struct MessagesView: View {
             // TODO: thread would lock up. My guess is it was something under
             // TODO: the hood, but I never got to the root cause
             List {
-                ForEachStore(
+                ForEach(
                   store.scope(state: \.messageItems, action: \.messageItems)
                 ) { store in
                     MessageItemView(
