@@ -153,10 +153,9 @@ public struct TextInputFeature: Sendable {
                 let contentHeight = state.textLayoutManager.usageBoundsForTextContainer.height
                 state.height = min(max(contentHeight, state.minHeight), state.maxHeight)
 
-                return reduce(into: &state, action: .internal(.actionDidChange(lookForCommand(
-                    from: attributedString,
-                    in: selectedRange
-                ))))
+                let inputAction = lookForCommand(from: attributedString, in: selectedRange)
+                state.action = inputAction
+                return .send(.delegate(.event(.action(inputAction))))
 
             case let .internal(.mouseDown(origin, point, index)):
                 guard let attributedString = state.textContentStorage.textStorage else {

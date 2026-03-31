@@ -47,8 +47,7 @@ public struct SplashScreenFeature: Sendable {
     
     // MARK: - Action
     
-    public enum Action: BindableAction, Equatable {
-        case binding(BindingAction<State>)
+    public enum Action: Equatable {
         case onAppear
         case enterKeyPressed
         case moveFocusUp
@@ -61,17 +60,12 @@ public struct SplashScreenFeature: Sendable {
     // MARK: - Reducer Body
     
     public var body: some ReducerOf<Self> {
-        BindingReducer()
-        
         Scope(state: \.recentProjectsSelection, action: \.recentProjectsSelection) {
             RecentProjectsSelectionFeature()
         }
         
         Reduce { state, action in
             switch action {
-            case .binding:
-                return .none
-                
             case .onAppear:
                 return .send(.recentProjectsSelection(.onAppear))
                 

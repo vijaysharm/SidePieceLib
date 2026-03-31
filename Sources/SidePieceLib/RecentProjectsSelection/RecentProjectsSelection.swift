@@ -50,8 +50,7 @@ public struct RecentProjectsSelectionFeature: Sendable {
     
     // MARK: - Action
     
-    public enum Action: BindableAction, Equatable {
-        case binding(BindingAction<State>)
+    public enum Action: Equatable {
         case onAppear
         case enterKeyPressed
         case moveFocusUp
@@ -78,13 +77,8 @@ public struct RecentProjectsSelectionFeature: Sendable {
     // MARK: - Reducer Body
     
     public var body: some ReducerOf<Self> {
-        BindingReducer()
-        
         Reduce { state, action in
             switch action {
-            case .binding:
-                return .none
-                
             case .onAppear:
                 state.isLoading = true
                 return .run { send in

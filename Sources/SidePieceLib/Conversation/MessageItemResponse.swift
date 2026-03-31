@@ -486,7 +486,7 @@ struct MessageItemResponseView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            ForEachStore(
+            ForEach(
               store.scope(state: \.blocks, action: \.blocks)
             ) { store in
                 switch store.state {
