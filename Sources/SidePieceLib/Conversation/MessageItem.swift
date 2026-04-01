@@ -122,6 +122,10 @@ public struct MessageItemFeature: Sendable {
             case .response(.delegate(.restartStream)):
                 return .send(.internal(.startLLMStream))
 
+            case .response(.delegate(.maxTurnsReached)):
+                // Bubble up as stream error so the UI and parent can handle it
+                return .none
+
             case .response:
                 return .none
 

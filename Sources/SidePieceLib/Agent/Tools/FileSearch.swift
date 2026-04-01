@@ -7,6 +7,7 @@ import Foundation
 
 public struct FileSearchTool: TypedTool {
     public let name = "file_search"
+    public let safetyLevel: ToolSafetyLevel = .safe
     public let description =
         "Fast fuzzy file search based on matching against file paths. " +
         "Use when you know part of a filename but not its exact location. " +

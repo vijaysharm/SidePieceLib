@@ -10,6 +10,7 @@ import Foundation
 
 public struct GlobFileSearchTool: TypedTool {
     public let name = "glob_file_search"
+    public let safetyLevel: ToolSafetyLevel = .safe
     public let description =
         "Search for files matching a glob pattern. Works fast with codebases of any size " +
         "and returns matching file paths sorted by modification time. Great for finding " +

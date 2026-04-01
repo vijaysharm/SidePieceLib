@@ -10,6 +10,7 @@ import Foundation
 
 public struct ListDirectoryTool: TypedTool {
     public let name = "list_dir"
+    public let safetyLevel: ToolSafetyLevel = .safe
     public let description =
         "Lists files and directories in a given path. Does not display dot-files and " +
         "dot-directories by default. Supports filtering with glob patterns to ignore " +

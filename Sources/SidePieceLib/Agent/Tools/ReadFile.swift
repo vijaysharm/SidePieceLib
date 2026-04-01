@@ -9,6 +9,7 @@ import Foundation
 
 public struct ReadFileTool: TypedTool {
     public let name = "read_file"
+    public let safetyLevel: ToolSafetyLevel = .safe
     public let description =
         "Read the contents of a file from the project directory. " +
         "Returns the file content as text with line numbers, or base64 data for image files."

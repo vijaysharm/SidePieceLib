@@ -14,7 +14,7 @@ public struct AgentClient: Sendable {
 extension AgentClient: DependencyKey {
     public static let liveValue = AgentClient(
         agents: {
-            .agents([.defaultAsk], default: .defaultAsk)
+            .agents([.defaultAsk, .defaultCode], default: .defaultCode)
         }
     )
 }

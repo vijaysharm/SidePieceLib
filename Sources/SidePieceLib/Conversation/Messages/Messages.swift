@@ -45,13 +45,15 @@ public struct MessagesFeature: Sendable {
                 let history = state.messageItems.flatMap { message in
                     message.content
                 }
+                let agent = input.agentToolbar.selectedAgent
                 let message = MessageItemFeature.State(
                     id: uuid(),
                     projectURL: state.projectURL,
                     prompt: input,
                     history: history,
                     response: MessageItemResponseFeature.State(
-                        projectURL: state.projectURL
+                        projectURL: state.projectURL,
+                        maxTurns: agent.maxTurns
                     )
                 )
 
@@ -84,7 +86,8 @@ public struct MessagesFeature: Sendable {
                 return .none
 
             case let .messageItems(.element(id, action: .response(.delegate(.streamEnded)))),
-                    let .messageItems(.element(id, action: .response(.delegate(.streamError)))):
+                    let .messageItems(.element(id, action: .response(.delegate(.streamError)))),
+                    let .messageItems(.element(id, action: .response(.delegate(.maxTurnsReached)))):
                 state.streamingMessageID = nil
                 
                 guard let message = state.messageItems[id: id] else { return .none }
@@ -117,6 +120,14 @@ public struct MessagesFeature: Sendable {
                 }
 
                 let interaction = toolRegistryClient.resolveInteraction(toolCall.name, toolCall.arguments)
+                let safety = toolRegistryClient.safetyLevel(toolCall.name)
+
+                // Auto-approve safe tools (read-only) — they execute without
+                // user interaction, mirroring Claude Code's permission model
+                // where read tools run automatically in the agentic loop.
+                if safety == .safe {
+                    return .send(.messageItems(.element(id: id, action: .response(.executeToolCallApproved(toolCall)))))
+                }
 
                 // If the tool is in the "always allowed" set AND the interaction
                 // supports it, skip the interaction entirely and auto-approve.

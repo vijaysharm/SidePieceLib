@@ -113,6 +113,10 @@ public protocol TypedTool: Sendable {
     /// A human-readable description sent to the LLM explaining what the tool does.
     var description: String { get }
 
+    /// Whether this tool is safe to auto-execute or requires user approval.
+    /// Defaults to `.supervised` (requires approval).
+    var safetyLevel: ToolSafetyLevel { get }
+
     /// Given the decoded input from the LLM, produces the interaction specification.
     /// Defaults to `.permission` (the standard Allow/Deny gate).
     ///
@@ -135,6 +139,9 @@ public protocol TypedTool: Sendable {
 }
 
 extension TypedTool {
+    /// Default safety: requires user approval.
+    public var safetyLevel: ToolSafetyLevel { .supervised }
+
     /// Default interaction: simple permission gate.
     public func resolveInteraction(for input: Input) -> ToolInteraction { .permission }
 
@@ -164,6 +171,7 @@ extension Tool {
     public init<T: TypedTool>(_ typedTool: T) {
         self.init(
             definition: typedTool.definition,
+            safetyLevel: typedTool.safetyLevel,
             resolveInteraction: { arguments in
                 @Dependency(\.jsonCoder) var jsonCoder
                 guard let data = arguments.data(using: .utf8) else {

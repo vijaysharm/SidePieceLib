@@ -9,6 +9,7 @@ import Foundation
 
 public struct CodebaseFileSearchTool: TypedTool {
     public let name = "codebase_search"
+    public let safetyLevel: ToolSafetyLevel = .safe
     public let description =
         "Semantic search that finds code by meaning, not exact text. " +
         "Perfect for exploring unfamiliar codebases and answering \"how\", " +

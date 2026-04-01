@@ -7,6 +7,7 @@ import Foundation
 
 public struct GrepTool: TypedTool {
     public let name = "grep"
+    public let safetyLevel: ToolSafetyLevel = .safe
     public let description =
         "A powerful ripgrep-based search tool for exact symbol and string matching. " +
         "Supports full regex syntax, respects .gitignore, and offers multiple output modes. " +

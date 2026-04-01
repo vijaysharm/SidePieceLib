@@ -13,6 +13,14 @@ public struct MessageItemResponseFeature: Sendable {
     public struct State: Equatable, Sendable {
         let projectURL: URL
         var blocks: IdentifiedArrayOf<ResponseBlockFeature.State> = []
+
+        /// Number of completed agentic loop turns (incremented each time tools
+        /// finish and the stream restarts).
+        var turnCount: Int = 0
+
+        /// Maximum agentic loop turns before auto-stopping.
+        var maxTurns: Int = 25
+
         var content: [ConversationItem] {
             blocks.content
         }
@@ -38,6 +46,7 @@ public struct MessageItemResponseFeature: Sendable {
             case streamEnded(TokenUsage?)
             case streamError
             case restartStream
+            case maxTurnsReached
         }
 
         @CasePathable
@@ -174,6 +183,10 @@ public struct MessageItemResponseFeature: Sendable {
                     }
 
                     guard !activeTools.isEmpty else {
+                        state.turnCount += 1
+                        if state.maxTurns > 0, state.turnCount >= state.maxTurns {
+                            return .send(.delegate(.maxTurnsReached))
+                        }
                         return .send(.delegate(.restartStream))
                     }
 
@@ -286,6 +299,12 @@ public struct MessageItemResponseFeature: Sendable {
 
                 guard activeTools.isEmpty else {
                     return .none
+                }
+
+                // Increment turn count and check against max turns limit
+                state.turnCount += 1
+                if state.maxTurns > 0, state.turnCount >= state.maxTurns {
+                    return .send(.delegate(.maxTurnsReached))
                 }
 
                 return .send(.delegate(.restartStream))

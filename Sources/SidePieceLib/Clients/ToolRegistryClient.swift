@@ -15,6 +15,9 @@ public struct ToolRegistryClient: Sendable {
     /// Resolves the interaction type for the named tool given its arguments,
     /// or `.permission` if the tool is unknown.
     public var resolveInteraction: @Sendable (_ name: String, _ arguments: String) -> ToolInteraction = { _, _ in .permission }
+
+    /// Returns the safety level for the named tool, or `.supervised` if unknown.
+    public var safetyLevel: @Sendable (_ name: String) -> ToolSafetyLevel = { _ in .supervised }
 }
 
 extension ToolRegistryClient: DependencyKey {
@@ -38,6 +41,11 @@ extension ToolRegistryClient: DependencyKey {
             resolveInteraction: { name, arguments in
                 registry.withValue {
                     $0[name]?.resolveInteraction(arguments) ?? .permission
+                }
+            },
+            safetyLevel: { name in
+                registry.withValue {
+                    $0[name]?.safetyLevel ?? .supervised
                 }
             }
         )
