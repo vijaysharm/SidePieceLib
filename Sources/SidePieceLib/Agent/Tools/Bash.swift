@@ -49,15 +49,49 @@ public struct BashTool: TypedTool {
 
     static let maxOutputSize = 100_000
 
+    // MARK: - Environment
+
+    /// Extra PATH directories that sandboxed apps need to find CLI tools.
+    /// Mirrors ProcessStreamClient.enrichedEnvironment so user-installed
+    /// binaries (git, node, swift, cargo, etc.) are reachable.
+    private static let extraPathDirs: [String] = {
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        return [
+            home.appendingPathComponent(".local/bin").path,
+            "/opt/homebrew/bin",
+            "/opt/homebrew/sbin",
+            "/usr/local/bin",
+            home.appendingPathComponent(".cargo/bin").path,
+        ]
+    }()
+
+    private static func enrichedEnvironment() -> [String: String] {
+        var env = ProcessInfo.processInfo.environment
+        let currentPath = env["PATH"] ?? "/usr/bin:/bin"
+        var seen = Set<String>()
+        var merged: [String] = []
+        for dir in currentPath.split(separator: ":").map(String.init) + extraPathDirs {
+            if seen.insert(dir).inserted {
+                merged.append(dir)
+            }
+        }
+        env["PATH"] = merged.joined(separator: ":")
+        return env
+    }
+
     // MARK: - Execute
 
     public func execute(_ input: Input, projectURL: URL) async throws -> Output {
         let timeoutSeconds = min(max(input.timeout ?? 120, 1), 600)
 
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/bin/bash")
-        process.arguments = ["-c", input.command]
+        // Use /usr/bin/env to resolve bash, matching the existing pattern
+        // in GrepTool and ProcessStreamClient. Direct paths like /bin/bash
+        // can fail under app sandbox.
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        process.arguments = ["bash", "-c", input.command]
         process.currentDirectoryURL = projectURL
+        process.environment = Self.enrichedEnvironment()
 
         let stdoutPipe = Pipe()
         let stderrPipe = Pipe()
