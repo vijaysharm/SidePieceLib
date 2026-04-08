@@ -364,6 +364,30 @@ public extension Model {
         )
     }
 
+    /// Create a model using the OpenAI Chat Completions API.
+    /// Works with OpenAI, Groq, Together, xAI, OpenRouter, Mistral, Ollama, and others.
+    static func openAIChatCompletions(
+        id: String,
+        modelId: String,
+        apiKey: String,
+        baseURL: URL = URL(string: "https://api.openai.com/v1")!,
+        compat: OpenAICompletionsCompat = .default,
+        properties: Set<Model.Properties> = []
+    ) -> Model {
+        Model(
+            id: .init(id),
+            properties: properties,
+            stream: { items, options in
+                OpenAIChatCompletionsProvider(
+                    modelId: modelId,
+                    apiKey: apiKey,
+                    baseURL: baseURL,
+                    compat: compat
+                ).stream(items: items, options: options)
+            }
+        )
+    }
+
     /// Create a mock model for testing/preview (streams demo content)
     static func mock(
         id: String = "mock",

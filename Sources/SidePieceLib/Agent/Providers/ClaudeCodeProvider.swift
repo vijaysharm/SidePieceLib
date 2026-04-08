@@ -149,8 +149,10 @@ public struct ClaudeCodeProvider: AIProvider, Sendable {
                                     let cacheCreation = u["cache_creation_input_tokens"]?.intValue ?? 0
                                     let cacheRead = u["cache_read_input_tokens"]?.intValue ?? 0
                                     usage = TokenUsage(
-                                        promptTokens: input + cacheCreation + cacheRead,
-                                        completionTokens: output
+                                        promptTokens: input,
+                                        completionTokens: output,
+                                        cacheReadTokens: cacheRead,
+                                        cacheWriteTokens: cacheCreation
                                     )
                                 }
 

@@ -195,6 +195,8 @@ public struct GeminiProvider: AIProvider, Sendable {
                 body["thinkingConfig"] = .object(["thinkingBudget": .int(2048)])
             case .high:
                 body["thinkingConfig"] = .object(["thinkingBudget": .int(8192)])
+            case .max:
+                body["thinkingConfig"] = .object(["thinkingBudget": .int(32768)])
             }
         }
 

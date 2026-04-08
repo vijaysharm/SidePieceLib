@@ -46,13 +46,53 @@ public struct TokenUsage: Sendable, Equatable, Codable {
 
     public let promptTokens: Int
     public let completionTokens: Int
+    public let cacheReadTokens: Int
+    public let cacheWriteTokens: Int
     public var totalTokens: Int { promptTokens + completionTokens }
     public var details: [String: Int]
 
-    public init(promptTokens: Int, completionTokens: Int, details: [String: Int] = [:]) {
+    public init(
+        promptTokens: Int,
+        completionTokens: Int,
+        cacheReadTokens: Int = 0,
+        cacheWriteTokens: Int = 0,
+        details: [String: Int] = [:]
+    ) {
         self.promptTokens = promptTokens
         self.completionTokens = completionTokens
+        self.cacheReadTokens = cacheReadTokens
+        self.cacheWriteTokens = cacheWriteTokens
         self.details = details
+    }
+}
+
+// MARK: - Cost Calculation
+
+extension TokenUsage {
+    /// Calculate the dollar cost of this usage given per-million-token rates.
+    ///
+    /// - Parameters:
+    ///   - inputRate: Cost per million input tokens.
+    ///   - outputRate: Cost per million output tokens.
+    ///   - cacheReadRate: Cost per million cache-read tokens (typically cheaper than input).
+    ///     Defaults to `nil`, which uses `inputRate * 0.1` (Anthropic's typical 90% discount).
+    ///   - cacheWriteRate: Cost per million cache-write tokens (typically more expensive).
+    ///     Defaults to `nil`, which uses `inputRate * 1.25` (Anthropic's typical 25% surcharge).
+    /// - Returns: The estimated dollar cost.
+    public func estimatedCost(
+        inputRate: Decimal,
+        outputRate: Decimal,
+        cacheReadRate: Decimal? = nil,
+        cacheWriteRate: Decimal? = nil
+    ) -> Decimal {
+        let million: Decimal = 1_000_000
+        let inputCost = Decimal(promptTokens) * inputRate / million
+        let outputCost = Decimal(completionTokens) * outputRate / million
+        let readRate = cacheReadRate ?? (inputRate * Decimal(string: "0.1")!)
+        let writeRate = cacheWriteRate ?? (inputRate * Decimal(string: "1.25")!)
+        let cacheReadCost = Decimal(cacheReadTokens) * readRate / million
+        let cacheWriteCost = Decimal(cacheWriteTokens) * writeRate / million
+        return inputCost + outputCost + cacheReadCost + cacheWriteCost
     }
 }
 
@@ -148,6 +188,33 @@ public enum ReasoningEffort: String, Sendable, Equatable {
     case low    // Minimal reasoning
     case medium // Moderate reasoning
     case high   // Full reasoning (default model behavior)
+    case max    // Maximum reasoning (Anthropic adaptive "max", OpenAI not supported)
+}
+
+// MARK: - Cache Retention
+
+/// Controls prompt caching behavior for providers that support it.
+/// Prompt caching can significantly reduce costs for multi-turn conversations.
+public enum CacheRetention: String, Sendable, Equatable {
+    /// No caching — every request is billed at full input token rate.
+    case none
+    /// Short-lived cache (typically 5 minutes). Good for interactive conversations.
+    case short
+    /// Long-lived cache (typically 1 hour). Good for batch workloads or slow conversations.
+    case long
+}
+
+// MARK: - Service Tier
+
+/// Controls the service tier for providers that support tiered pricing.
+/// Currently relevant for OpenAI's flex/priority tiers.
+public enum ServiceTier: String, Sendable, Equatable {
+    /// Default tier — standard pricing and latency.
+    case auto
+    /// Flex tier — up to 50% cost reduction with potentially higher latency.
+    case flex
+    /// Priority tier — higher cost for lower latency and priority access.
+    case priority
 }
 
 // MARK: - Request Options
@@ -159,6 +226,8 @@ public struct LLMRequestOptions: Sendable, Equatable {
     public var maxOutputTokens: Int?
     public var reasoningEffort: ReasoningEffort?
     public var tools: [ToolDefinition]
+    public var cacheRetention: CacheRetention?
+    public var serviceTier: ServiceTier?
 
     public init(
         agent: Agent,
@@ -166,7 +235,9 @@ public struct LLMRequestOptions: Sendable, Equatable {
         temperature: Double? = nil,
         maxOutputTokens: Int? = nil,
         reasoningEffort: ReasoningEffort? = nil,
-        tools: [ToolDefinition] = []
+        tools: [ToolDefinition] = [],
+        cacheRetention: CacheRetention? = nil,
+        serviceTier: ServiceTier? = nil
     ) {
         self.agent = agent
         self.systemPrompt = systemPrompt
@@ -174,6 +245,8 @@ public struct LLMRequestOptions: Sendable, Equatable {
         self.maxOutputTokens = maxOutputTokens
         self.reasoningEffort = reasoningEffort
         self.tools = tools
+        self.cacheRetention = cacheRetention
+        self.serviceTier = serviceTier
     }
 }
 
